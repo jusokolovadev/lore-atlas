@@ -1,0 +1,20 @@
+:where(h1, h2, h3, h4, p) {
+  margin-block: 0;
+}
+:where(h1, h2, h3, h4) {
+  color: var(--color-text-primary);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--line-height-tight);
+}
+:where(h1) {
+  font-size: clamp(2rem, 5vw, var(--font-size-4xl));
+}
+:where(h2) {
+  font-size: var(--font-size-3xl);
+}
+:where(h3) {
+  font-size: var(--font-size-2xl);
+}
+:where(small) {
+  font-size: var(--font-size-xs);
+}

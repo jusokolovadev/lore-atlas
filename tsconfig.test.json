@@ -17,9 +17,5 @@
     "src/**/*.d.ts"
   ],
   "exclude": ["node_modules"],
-  "types": [
-    "vite/client",
-    "jest",
-    "@testing-library/jest-dom"
-  ]
+  "types": ["vite/client", "jest", "@testing-library/jest-dom"]
 }
