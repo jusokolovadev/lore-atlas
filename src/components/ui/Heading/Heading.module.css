@@ -1,0 +1,65 @@
+.heading {
+  margin: 0;
+  font-family: var(--font-family-base);
+  line-height: 1.25;
+}
+
+.sm {
+  font-size: var(--font-size-base);
+}
+
+.md {
+  font-size: var(--font-size-lg);
+}
+
+.lg {
+  font-size: var(--font-size-xl);
+}
+
+.xl {
+  font-size: var(--font-size-2xl);
+}
+
+.\32xl {
+  font-size: var(--font-size-3xl);
+}
+
+.\33xl {
+  font-size: var(--font-size-4xl);
+}
+
+.medium {
+  font-weight: 500;
+}
+
+.semibold {
+  font-weight: 600;
+}
+
+.bold {
+  font-weight: 700;
+}
+
+.primary {
+  color: var(--color-text-primary);
+}
+
+.secondary {
+  color: var(--color-text-secondary);
+}
+
+.tertiary {
+  color: var(--color-text-tertiary);
+}
+
+.left {
+  text-align: left;
+}
+
+.center {
+  text-align: center;
+}
+
+.right {
+  text-align: right;
+}

@@ -36,13 +36,3 @@
 .invalid {
   border-color: var(--color-error);
 }
-.hint,
-.error {
-  font-size: var(--font-size-xs);
-}
-.hint {
-  color: var(--color-text-secondary);
-}
-.error {
-  color: var(--color-error);
-}

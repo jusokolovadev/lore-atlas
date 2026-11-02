@@ -7,6 +7,8 @@ import {
   type ReactNode,
 } from 'react';
 import styles from './Toast.module.css';
+import { Text } from 'src/components/ui/Text/Text';
+import { Button } from 'src/components/ui';
 
 export type ToastType = 'success' | 'error' | 'warning' | 'info';
 interface ToastItem {
@@ -29,8 +31,9 @@ export function ToastProvider({ children }: { children: ReactNode }) {
     },
     [],
   );
-  const dismiss = (id: number) =>
+  const dismiss = useCallback((id: number) => {
     setItems((current) => current.filter((item) => item.id !== id));
+  }, []);
   return (
     <ToastContext.Provider value={{ notify }}>
       {children}
@@ -60,14 +63,10 @@ function ToastMessage({
       className={`${styles.toast} ${styles[item.type]}`}
       role={item.type === 'error' ? 'alert' : 'status'}
     >
-      <span>{item.message}</span>
-      <button
-        type="button"
-        onClick={() => onDismiss(item.id)}
-        aria-label="Dismiss notification"
-      >
+      <Text>{item.message}</Text>
+      <Button onClick={() => onDismiss(item.id)} aria-label="Dismiss notification">
         ×
-      </button>
+      </Button>
     </div>
   );
 }

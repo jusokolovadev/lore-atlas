@@ -1,4 +1,3 @@
-
 .button {
   display: inline-flex;
   align-items: center;
@@ -8,33 +7,15 @@
   border: 1px solid transparent;
   border-radius: var(--radius-md);
 
-  font-family: var(--font-family-base);
-  font-weight: 500;
-  line-height: 1;
-
   cursor: pointer;
   white-space: nowrap;
 
   transition:
-      background-color var(--transition-fast),
-      border-color var(--transition-fast),
-      color var(--transition-fast),
-      box-shadow var(--transition-fast),
-      transform var(--transition-fast);
-}
-
-.button:focus-visible {
-  outline: none;
-  box-shadow: var(--focus-ring);
-}
-
-.button:active:not(:disabled) {
-  transform: translateY(1px);
-}
-
-.button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
+    background-color var(--transition-fast),
+    border-color var(--transition-fast),
+    color var(--transition-fast),
+    box-shadow var(--transition-fast),
+    transform var(--transition-fast);
 }
 
 /* Sizes */
@@ -42,19 +23,16 @@
 .sm {
   min-height: 32px;
   padding: 0 var(--space-3);
-  font-size: var(--font-size-sm);
 }
 
 .md {
   min-height: 40px;
   padding: 0 var(--space-4);
-  font-size: var(--font-size-base);
 }
 
 .lg {
   min-height: 48px;
   padding: 0 var(--space-5);
-  font-size: var(--font-size-lg);
 }
 
 /* Variants */
@@ -122,32 +100,8 @@
   cursor: wait;
 }
 
-.spinner {
-  width: 14px;
-  height: 14px;
-  flex-shrink: 0;
-
-  border: 2px solid currentColor;
-  border-right-color: transparent;
-  border-radius: 50%;
-
-  animation: spin 0.7s linear infinite;
-}
-
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
 @media (prefers-reduced-motion: reduce) {
   .button {
     transition: none;
   }
-
-  .spinner {
-    animation-duration: 1.5s;
-  }
 }
-
-

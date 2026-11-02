@@ -1,4 +1,5 @@
 import { forwardRef, type InputHTMLAttributes } from 'react';
+import { Text } from '../Text/Text';
 import styles from './Input.module.css';
 
 export interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
@@ -14,17 +15,22 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
   const inputId =
     id ??
     (label ? `input-${label.toLowerCase().replace(/[^a-z0-9]+/g, '-')}` : undefined);
+
   const describedBy =
     [hint && !error ? `${inputId}-hint` : null, error ? `${inputId}-error` : null]
       .filter(Boolean)
       .join(' ') || undefined;
+
   return (
     <div className={styles.field}>
       {label && (
-        <label className={styles.label} htmlFor={inputId}>
-          {label}
+        <label htmlFor={inputId}>
+          <Text as="span" size="sm" weight="medium">
+            {label}
+          </Text>
         </label>
       )}
+
       <input
         ref={ref}
         id={inputId}
@@ -33,14 +39,15 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
         aria-describedby={describedBy}
         {...props}
       />
+
       {error ? (
-        <span className={styles.error} id={`${inputId}-error`}>
+        <Text id={`${inputId}-error`} size="xs" color="error">
           {error}
-        </span>
+        </Text>
       ) : hint ? (
-        <span className={styles.hint} id={`${inputId}-hint`}>
+        <Text id={`${inputId}-hint`} size="xs" color="secondary">
           {hint}
-        </span>
+        </Text>
       ) : null}
     </div>
   );

@@ -21,8 +21,8 @@ body {
   line-height: 1.5;
 
   transition:
-      background-color var(--transition-normal),
-      color var(--transition-normal);
+    background-color var(--transition-normal),
+    color var(--transition-normal);
 }
 
 button,

@@ -13,17 +13,11 @@ type ThemeWrapperProps = {
 function ThemeWrapper({ theme, children }: ThemeWrapperProps) {
   useLayoutEffect(() => {
     const root = document.documentElement;
-    const mediaQuery = window.matchMedia(
-      '(prefers-color-scheme: light)',
-    );
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: light)');
 
     const applyTheme = () => {
       const resolvedTheme =
-        theme === 'system'
-          ? mediaQuery.matches
-            ? 'light'
-            : 'dark'
-          : theme;
+        theme === 'system' ? (mediaQuery.matches ? 'light' : 'dark') : theme;
 
       root.dataset.theme = resolvedTheme;
     };

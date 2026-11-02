@@ -1,0 +1,15 @@
+.content {
+  z-index: 1000;
+  min-width: 180px;
+  max-width: min(360px, calc(100vw - 16px));
+
+  padding: var(--space-4);
+
+  background: var(--color-surface-elevated);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+
+  color: var(--color-text-primary);
+  outline: none;
+}

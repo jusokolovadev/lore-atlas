@@ -9,9 +9,7 @@ import './styles/themes.css';
 import './styles/typography.css';
 import './styles/global.css';
 
-ReactDOM.createRoot(
-  document.getElementById('root')!,
-).render(
+ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <ThemeProvider>
       <App />

@@ -15,14 +15,15 @@
         const savedTheme = localStorage.getItem(STORAGE_KEY);
 
         const theme = ['dark', 'light', 'system'].includes(savedTheme)
-                ? savedTheme
-                : 'dark';
+          ? savedTheme
+          : 'dark';
 
-        document.documentElement.dataset.theme = theme === 'system'
-                ? window.matchMedia('(prefers-color-scheme: light)').matches
-                        ? 'light'
-                        : 'dark'
-                : theme;
+        document.documentElement.dataset.theme =
+          theme === 'system'
+            ? window.matchMedia('(prefers-color-scheme: light)').matches
+              ? 'light'
+              : 'dark'
+            : theme;
       })();
     </script>
   </head>

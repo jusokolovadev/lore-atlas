@@ -1,16 +1,13 @@
 import type { ComponentPropsWithoutRef, ReactNode } from 'react';
+import { Text } from '../Text/Text';
 import styles from './Button.module.css';
+import { Spinner } from '../Spinner/Spinner';
 
-export type ButtonVariant =
-  | 'primary'
-  | 'secondary'
-  | 'ghost'
-  | 'danger';
+export type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger';
 
 export type ButtonSize = 'sm' | 'md' | 'lg';
 
-export interface ButtonProps
-  extends ComponentPropsWithoutRef<'button'> {
+export interface ButtonProps extends ComponentPropsWithoutRef<'button'> {
   variant?: ButtonVariant;
   size?: ButtonSize;
   loading?: boolean;
@@ -18,6 +15,12 @@ export interface ButtonProps
   leftIcon?: ReactNode;
   rightIcon?: ReactNode;
 }
+
+const textSizes = {
+  sm: 'sm',
+  md: 'md',
+  lg: 'lg',
+} as const;
 
 export function Button({
   variant = 'primary',
@@ -52,19 +55,16 @@ export function Button({
       aria-busy={loading || undefined}
     >
       {loading ? (
-        <span className={styles.spinner} aria-hidden="true" />
+        <Spinner size="sm" aria-hidden="true" />
       ) : (
-        leftIcon && (
-          <span className={styles.icon}>{leftIcon}</span>
-        )
+        leftIcon && <span className={styles.icon}>{leftIcon}</span>
       )}
 
-      <span>{children}</span>
+      <Text as="span" size={textSizes[size]} weight="bold">
+        {children}
+      </Text>
 
-      {!loading && rightIcon && (
-        <span className={styles.icon}>{rightIcon}</span>
-      )}
+      {!loading && rightIcon && <span className={styles.icon}>{rightIcon}</span>}
     </button>
   );
 }
-

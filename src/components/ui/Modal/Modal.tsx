@@ -1,6 +1,8 @@
 import { useEffect, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import styles from './Modal.module.css';
+import { Heading } from 'src/components/ui/Heading/Heading';
+import { Text } from 'src/components/ui/Text/Text';
 
 export interface ModalProps {
   open: boolean;
@@ -58,8 +60,8 @@ export function Modal({ open, onClose, title, description, children }: ModalProp
       >
         <header className={styles.header}>
           <div className={styles.heading}>
-            <h2 id="modal-title">{title}</h2>
-            {description && <p id="modal-description">{description}</p>}
+            <Heading id="modal-title">{title}</Heading>
+            {description && <Text id="modal-description">{description}</Text>}
           </div>
           <button
             className={styles.close}
