@@ -1,46 +1,52 @@
 .page {
+  display: flex;
+  flex-direction: column;
+  padding: var(--space-8) var(--space-4);
+}
+
+.main {
   display: grid;
   min-height: 100vh;
   place-items: center;
-  padding: 2rem;
 }
-
 .content {
+  display: grid;
+  justify-items: center;
   width: min(100%, 42rem);
   text-align: center;
+  gap: var(--space-4);
 }
-
 .eyebrow {
-  margin: 0 0 1rem;
-  color: var(--color-muted);
-  font-size: 0.75rem;
-  font-weight: 700;
+  color: var(--color-primary);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-bold);
   letter-spacing: 0.16em;
   text-transform: uppercase;
 }
-
 .content h1 {
-  margin: 0;
-  font-family: Georgia, 'Times New Roman', serif;
+  font-family: var(--font-family-display);
   font-size: clamp(3.5rem, 12vw, 7rem);
   font-weight: 500;
   letter-spacing: -0.07em;
 }
-
 .description {
   max-width: 32rem;
-  margin: 1.5rem auto 2rem;
-  color: var(--color-muted);
-  font-size: 1.125rem;
-  line-height: 1.7;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-lg);
+  line-height: var(--line-height-relaxed);
 }
-
 .status {
   display: inline-flex;
   border: 1px solid var(--color-border);
-  border-radius: 999px;
-  padding: 0.5rem 0.875rem;
-  color: var(--color-muted);
-  font-size: 0.75rem;
-  letter-spacing: 0.04em;
+  border-radius: var(--radius-full);
+  padding: var(--space-2) var(--space-3);
+  color: var(--color-text-secondary);
+  background: var(--color-surface);
+  font-size: var(--font-size-xs);
+}
+.header {
+  align-self: flex-end;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }

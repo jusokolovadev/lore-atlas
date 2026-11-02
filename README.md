@@ -53,16 +53,16 @@ Open the local URL printed by Vite (usually `http://localhost:5173`).
 
 ## Available scripts
 
-| Command | Description |
-| --- | --- |
-| `pnpm dev` | Start the development server |
-| `pnpm build` | Type-check and create a production build |
-| `pnpm preview` | Preview the production build locally |
-| `pnpm test` | Run Jest tests |
-| `pnpm test:watch` | Run Jest in watch mode |
-| `pnpm lint` | Run ESLint |
-| `pnpm format` | Format project files |
-| `pnpm format:check` | Check formatting |
+| Command             | Description                              |
+| ------------------- | ---------------------------------------- |
+| `pnpm dev`          | Start the development server             |
+| `pnpm build`        | Type-check and create a production build |
+| `pnpm preview`      | Preview the production build locally     |
+| `pnpm test`         | Run Jest tests                           |
+| `pnpm test:watch`   | Run Jest in watch mode                   |
+| `pnpm lint`         | Run ESLint                               |
+| `pnpm format`       | Format project files                     |
+| `pnpm format:check` | Check formatting                         |
 
 ## Environment variables
 

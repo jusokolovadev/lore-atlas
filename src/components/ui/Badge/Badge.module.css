@@ -1,0 +1,64 @@
+.badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-1);
+  width: fit-content;
+  max-width: 100%;
+  border: 1px solid transparent;
+  border-radius: var(--radius-full);
+  white-space: nowrap;
+}
+
+.sm {
+  min-height: 20px;
+  padding: 1px var(--space-2);
+}
+
+.md {
+  min-height: 24px;
+  padding: 2px var(--space-2);
+}
+
+/* Variants */
+
+.neutral {
+  color: var(--color-text-secondary);
+  background: var(--color-surface-secondary);
+  border-color: var(--color-border);
+}
+
+.primary {
+  color: var(--color-primary);
+  background: color-mix(in srgb, var(--color-primary) 14%, transparent);
+}
+
+.success {
+  color: var(--color-success);
+  background: color-mix(in srgb, var(--color-success) 14%, transparent);
+}
+
+.warning {
+  color: var(--color-warning);
+  background: color-mix(in srgb, var(--color-warning) 14%, transparent);
+}
+
+.error {
+  color: var(--color-error);
+  background: color-mix(in srgb, var(--color-error) 14%, transparent);
+}
+
+.info {
+  color: var(--color-info);
+  background: color-mix(in srgb, var(--color-info) 14%, transparent);
+}
+
+/* Dot */
+
+.dot {
+  flex: 0 0 auto;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
