@@ -1,14 +1,22 @@
-import type { ButtonHTMLAttributes, ReactNode } from 'react';
+import type { ComponentPropsWithoutRef, ReactNode } from 'react';
 import styles from './Button.module.css';
 
-export type ButtonVariant = 'primary' | 'secondary' | 'outline' | 'ghost' | 'destructive';
+export type ButtonVariant =
+  | 'primary'
+  | 'secondary'
+  | 'ghost'
+  | 'danger';
+
 export type ButtonSize = 'sm' | 'md' | 'lg';
-export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
+
+export interface ButtonProps
+  extends ComponentPropsWithoutRef<'button'> {
   variant?: ButtonVariant;
   size?: ButtonSize;
   loading?: boolean;
   fullWidth?: boolean;
-  children: ReactNode;
+  leftIcon?: ReactNode;
+  rightIcon?: ReactNode;
 }
 
 export function Button({
@@ -16,29 +24,47 @@ export function Button({
   size = 'md',
   loading = false,
   fullWidth = false,
+  leftIcon,
+  rightIcon,
   disabled,
-  className = '',
   children,
+  className,
+  type = 'button',
   ...props
 }: ButtonProps) {
-  const classes = [
+  const classNames = [
     styles.button,
     styles[variant],
     styles[size],
-    fullWidth ? styles.fullWidth : '',
+    fullWidth && styles.fullWidth,
+    loading && styles.loading,
     className,
   ]
     .filter(Boolean)
     .join(' ');
+
   return (
     <button
-      className={classes}
+      {...props}
+      type={type}
+      className={classNames}
       disabled={disabled || loading}
       aria-busy={loading || undefined}
-      {...props}
     >
-      {loading && <span className={styles.spinner} aria-hidden="true" />}
-      {children}
+      {loading ? (
+        <span className={styles.spinner} aria-hidden="true" />
+      ) : (
+        leftIcon && (
+          <span className={styles.icon}>{leftIcon}</span>
+        )
+      )}
+
+      <span>{children}</span>
+
+      {!loading && rightIcon && (
+        <span className={styles.icon}>{rightIcon}</span>
+      )}
     </button>
   );
 }
+
