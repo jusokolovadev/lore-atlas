@@ -1,2 +1,1 @@
-// Shared domain types will be introduced with the first domain feature.
-export {};
+export type { ImageReference } from './image-reference';

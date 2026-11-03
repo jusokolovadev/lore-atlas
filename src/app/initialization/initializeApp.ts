@@ -1,22 +1,15 @@
-let shouldFailInitialization = true;
+import { getDatabase } from 'src/infrastructure/persistence/database/database';
+
 let initializationPromise: Promise<void> | null = null;
 
 export function initializeApp(): Promise<void> {
   if (!initializationPromise) {
-    initializationPromise = (async () => {
-      await new Promise<void>((resolve) => {
-        window.setTimeout(resolve, 2500);
+    initializationPromise = getDatabase()
+      .then(() => undefined)
+      .catch((error: unknown) => {
+        initializationPromise = null;
+        throw error;
       });
-
-      if (shouldFailInitialization) {
-        shouldFailInitialization = false;
-
-        throw new Error('Failed to initialize application');
-      }
-    })().catch((error: unknown) => {
-      initializationPromise = null;
-      throw error;
-    });
   }
 
   return initializationPromise;

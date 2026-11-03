@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import { ThemeProvider } from 'src/features/theme/ThemeProvider';
 import { ToastProvider } from 'src/components/ui';
+import { AppServicesProvider } from './AppServicesProvider';
 
 interface AppProvidersProps {
   children: ReactNode;
@@ -8,8 +9,10 @@ interface AppProvidersProps {
 
 export function AppProviders({ children }: AppProvidersProps) {
   return (
-    <ThemeProvider>
-      <ToastProvider>{children}</ToastProvider>
-    </ThemeProvider>
+    <AppServicesProvider>
+      <ThemeProvider>
+        <ToastProvider>{children}</ToastProvider>
+      </ThemeProvider>
+    </AppServicesProvider>
   );
 }

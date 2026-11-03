@@ -1,76 +1,57 @@
+jest.mock('src/infrastructure/persistence/database/database', () => ({
+  getDatabase: jest.fn(),
+}));
+
 describe('initializeApp', () => {
   beforeEach(() => {
     jest.resetModules();
-    jest.useFakeTimers();
   });
 
-  afterEach(() => {
-    jest.useRealTimers();
-  });
+  it('should initialize the database', async () => {
+    const { getDatabase } =
+      await import('src/infrastructure/persistence/database/database');
 
-  it('returns the same Promise when called multiple times', async () => {
     const { initializeApp } = await import('./initializeApp');
 
-    const firstCall = initializeApp();
-    const secondCall = initializeApp();
+    jest.mocked(getDatabase).mockResolvedValue({} as IDBDatabase);
 
-    expect(firstCall).toBe(secondCall);
+    await expect(initializeApp()).resolves.toBeUndefined();
 
-    const result = expect(firstCall).rejects.toThrow('Failed to initialize application');
-
-    await jest.advanceTimersByTimeAsync(2500);
-    await result;
+    expect(getDatabase).toHaveBeenCalledTimes(1);
   });
 
-  it('resets the Promise after a failed initialization', async () => {
+  it('should reuse the initialization promise', async () => {
+    const { getDatabase } =
+      await import('src/infrastructure/persistence/database/database');
+
     const { initializeApp } = await import('./initializeApp');
 
-    const firstAttempt = initializeApp();
+    jest.mocked(getDatabase).mockResolvedValue({} as IDBDatabase);
 
-    const firstResult = expect(firstAttempt).rejects.toThrow(
-      'Failed to initialize application',
-    );
+    const firstPromise = initializeApp();
+    const secondPromise = initializeApp();
 
-    await jest.advanceTimersByTimeAsync(2500);
-    await firstResult;
+    expect(firstPromise).toBe(secondPromise);
+    expect(getDatabase).toHaveBeenCalledTimes(1);
 
-    const secondAttempt = initializeApp();
-
-    expect(secondAttempt).not.toBe(firstAttempt);
-
-    await jest.advanceTimersByTimeAsync(2500);
-
-    await expect(secondAttempt).resolves.toBeUndefined();
+    await firstPromise;
   });
 
-  it('caches the Promise after successful initialization', async () => {
+  it('should allow retry after initialization failure', async () => {
+    const { getDatabase } =
+      await import('src/infrastructure/persistence/database/database');
+
     const { initializeApp } = await import('./initializeApp');
 
-    // The first attempt fails in our temporary simulation.
-    const firstAttempt = initializeApp();
-    const firstResult = expect(firstAttempt).rejects.toThrow();
+    jest
+      .mocked(getDatabase)
+      .mockRejectedValueOnce(new Error('Database error'))
+      .mockResolvedValueOnce({} as IDBDatabase);
 
-    await jest.advanceTimersByTimeAsync(2500);
-    await firstResult;
+    await expect(initializeApp()).rejects.toThrow('Database error');
 
-    // The second attempt succeeds.
-    const successfulAttempt = initializeApp();
+    await expect(initializeApp()).resolves.toBeUndefined();
 
-    let isResolved = false;
-
-    successfulAttempt.then(() => {
-      isResolved = true;
-    });
-
-    await jest.advanceTimersByTimeAsync(2499);
-    expect(isResolved).toBe(false);
-
-    await jest.advanceTimersByTimeAsync(1);
-    await successfulAttempt;
-
-    expect(isResolved).toBe(true);
-
-    // Further calls return the cached Promise.
-    expect(initializeApp()).toBe(successfulAttempt);
+    expect(getDatabase).toHaveBeenCalledTimes(2);
   });
 });
