@@ -53,3 +53,17 @@ export function getDatabase(): Promise<IDBDatabase> {
 
   return databasePromise;
 }
+
+export async function closeDatabase(): Promise<void> {
+  if (!databasePromise) {
+    return;
+  }
+
+  const currentPromise = databasePromise;
+
+  databasePromise = null;
+
+  const database = await currentPromise.catch(() => null);
+
+  database?.close();
+}

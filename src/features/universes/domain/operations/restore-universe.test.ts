@@ -1,5 +1,5 @@
 import { UniverseError } from '../errors/universe-error';
-import type { Universe } from './universe';
+import type { Universe } from '../models/universe';
 import { restoreUniverse } from './restore-universe';
 
 describe('restoreUniverse', () => {

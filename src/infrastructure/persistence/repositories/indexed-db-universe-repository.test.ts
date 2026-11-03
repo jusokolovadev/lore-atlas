@@ -1,4 +1,4 @@
-import type { Universe } from '../../domain/models/universe';
+import type { Universe } from 'src/features/universes/domain/models/universe';
 
 const DATABASE_NAME = 'lore-atlas';
 

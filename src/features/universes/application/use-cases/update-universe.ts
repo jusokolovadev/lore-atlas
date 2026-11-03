@@ -1,5 +1,5 @@
-import { updateUniverse } from '../../domain/models/update-universe';
-import type { UpdateUniverseInput } from '../../domain/models/update-universe';
+import { updateUniverse } from '../../domain/operations/update-universe';
+import type { UpdateUniverseInput } from '../../domain/operations/update-universe';
 import type { Universe } from '../../domain/models/universe';
 import type { UniverseRepository } from '../repositories/universe-repository';
 import { UniverseError } from '../../domain/errors/universe-error';

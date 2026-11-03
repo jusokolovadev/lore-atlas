@@ -1,5 +1,5 @@
 import { UniverseError } from '../../domain/errors/universe-error';
-import { restoreUniverse } from '../../domain/models/restore-universe';
+import { restoreUniverse } from '../../domain/operations/restore-universe';
 import type { UniverseRepository } from '../repositories/universe-repository';
 
 export interface RestoreUniverseDependencies {

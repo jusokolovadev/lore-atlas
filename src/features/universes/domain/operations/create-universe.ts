@@ -1,7 +1,7 @@
 import type { ImageReference } from 'src/shared/types/image-reference';
 
 import { UniverseError } from '../errors/universe-error';
-import type { Universe } from './universe';
+import type { Universe } from '../models/universe';
 
 export interface CreateUniverseInput {
   name: string;

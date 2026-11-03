@@ -5,6 +5,8 @@ import { initializeApp } from './initializeApp';
 import { LoadingScreen } from './components/LoadingScreen';
 import { InitializationError } from './components/InitializationError';
 
+const MIN_LOADING_DURATION_MS = 2000;
+
 interface AppInitializationProps {
   children: ReactNode;
 }
@@ -18,10 +20,15 @@ export function AppInitialization({ children }: AppInitializationProps) {
 
   useEffect(() => {
     let isActive = true;
+    let timeoutId: ReturnType<typeof setTimeout>;
 
     setState({ status: 'loading' });
 
-    initializeApp()
+    const minimumLoadingTime = new Promise<void>((resolve) => {
+      timeoutId = setTimeout(resolve, MIN_LOADING_DURATION_MS);
+    });
+
+    Promise.all([initializeApp(), minimumLoadingTime])
       .then(() => {
         if (isActive) {
           setState({ status: 'ready' });
@@ -40,6 +47,7 @@ export function AppInitialization({ children }: AppInitializationProps) {
 
     return () => {
       isActive = false;
+      clearTimeout(timeoutId);
     };
   }, [attempt]);
 

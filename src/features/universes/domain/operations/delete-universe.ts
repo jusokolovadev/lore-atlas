@@ -1,5 +1,5 @@
 import { UniverseError } from '../errors/universe-error';
-import type { Universe } from './universe';
+import type { Universe } from '../models/universe';
 
 export function deleteUniverse(universe: Universe, deletedAt: string): Universe {
   if (universe.deletedAt !== null) {

@@ -1,5 +1,5 @@
-import { createUniverse } from '../../domain/models/create-universe';
-import type { CreateUniverseInput } from '../../domain/models/create-universe';
+import { createUniverse } from '../../domain/operations/create-universe';
+import type { CreateUniverseInput } from '../../domain/operations/create-universe';
 import type { Universe } from '../../domain/models/universe';
 import type { UniverseRepository } from '../repositories/universe-repository';
 

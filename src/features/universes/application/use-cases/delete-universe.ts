@@ -1,9 +1,16 @@
 import { UniverseError } from '../../domain/errors/universe-error';
-import { deleteUniverse } from '../../domain/models/delete-universe';
+import { deleteUniverse } from '../../domain/operations/delete-universe';
+
+import { deleteReferenceCategory } from 'src/features/reference-categories/domain/operations/delete-reference-category';
+
 import type { UniverseRepository } from '../repositories/universe-repository';
+import type { ReferenceCategoryRepository } from 'src/features/reference-categories/application/repositories/reference-category-repository';
+import type { UniverseDeletionRepository } from '../repositories/universe-deletion-repository';
 
 export interface DeleteUniverseDependencies {
   repository: UniverseRepository;
+  referenceCategoryRepository: ReferenceCategoryRepository;
+  deletionRepository: UniverseDeletionRepository;
   getCurrentTime: () => string;
 }
 
@@ -19,13 +26,22 @@ export function createDeleteUniverseUseCase(
 
     const now = dependencies.getCurrentTime();
 
-    const deletedUniverse = deleteUniverse(universe, now);
-
-    const result = {
-      ...deletedUniverse,
+    const deletedUniverse = {
+      ...deleteUniverse(universe, now),
       updatedAt: now,
     };
 
-    await dependencies.repository.save(result);
+    const categories =
+      await dependencies.referenceCategoryRepository.findAllActiveByUniverseId(id);
+
+    const deletedCategories = categories.map((category) => ({
+      ...deleteReferenceCategory(category, now),
+      updatedAt: now,
+    }));
+
+    await dependencies.deletionRepository.deleteUniverseWithCategories(
+      deletedUniverse,
+      deletedCategories,
+    );
   };
 }
