@@ -30,6 +30,10 @@ const resolveTheme = (theme: Theme): ResolvedTheme => {
     return theme;
   }
 
+  if (typeof window.matchMedia !== 'function') {
+    return 'dark';
+  }
+
   return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
 };
 

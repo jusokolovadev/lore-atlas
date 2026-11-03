@@ -1,0 +1,222 @@
+.root {
+  display: flex;
+  min-width: 0;
+  color: var(--color-text-primary);
+}
+
+/* Linear */
+
+.linear {
+  flex-direction: column;
+  width: 100%;
+  gap: 8px;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-width: 0;
+}
+
+.label {
+  overflow: hidden;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.value {
+  flex-shrink: 0;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+  font-variant-numeric: tabular-nums;
+}
+
+.track {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  border-radius: var(--radius-full);
+  background: var(--color-surface-secondary);
+}
+
+.fill {
+  height: 100%;
+  border-radius: inherit;
+  background: var(--progress-color);
+}
+
+.noTrack {
+  background: transparent;
+}
+
+/* Linear sizes */
+
+.sm .track {
+  height: 4px;
+}
+
+.md .track {
+  height: 8px;
+}
+
+.lg .track {
+  height: 12px;
+}
+
+/* Variants */
+
+.default {
+  --progress-color: var(--color-primary);
+}
+
+.success {
+  --progress-color: var(--color-success);
+}
+
+.warning {
+  --progress-color: var(--color-warning);
+}
+
+.error {
+  --progress-color: var(--color-error);
+}
+
+/* Circular */
+
+.circular {
+  align-items: center;
+  flex-direction: column;
+  gap: 8px;
+  width: fit-content;
+}
+
+.circularWrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.circularSvg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  transform: rotate(-90deg);
+}
+
+.circularTrack,
+.circularFill {
+  fill: none;
+  stroke-width: 3.5;
+}
+
+.circularTrack {
+  stroke: var(--color-surface-secondary);
+}
+
+.circularFill {
+  stroke: var(--progress-color);
+  stroke-linecap: round;
+}
+
+.circularValue {
+  position: absolute;
+  color: var(--color-text-primary);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.circularLabel {
+  max-width: 180px;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+  text-align: center;
+}
+
+/* Circular sizes */
+
+.circular.sm .circularWrapper {
+  width: 32px;
+  height: 32px;
+}
+
+.circular.sm .circularFill,
+.circular.sm .circularTrack {
+  stroke-width: 4;
+}
+
+.circular.sm .circularValue {
+  font-size: 9px;
+}
+
+.circular.md .circularWrapper {
+  width: 48px;
+  height: 48px;
+}
+
+.circular.lg .circularWrapper {
+  width: 64px;
+  height: 64px;
+}
+
+.circular.lg .circularValue {
+  font-size: var(--font-size-base);
+}
+
+/* Animations */
+
+.animated .fill,
+.animated .circularFill {
+  transition:
+    width 300ms ease,
+    stroke-dashoffset 300ms ease;
+}
+
+.indeterminate.linear .fill {
+  position: absolute;
+  left: 0;
+  width: 35%;
+  animation: progress-indeterminate 1.5s ease-in-out infinite;
+}
+
+.indeterminate.circular .circularFill {
+  stroke-dasharray: 35 100;
+  stroke-dashoffset: 0;
+  animation: progress-spin 1.4s linear infinite;
+}
+
+@keyframes progress-indeterminate {
+  0% {
+    transform: translateX(-100%);
+  }
+
+  100% {
+    transform: translateX(300%);
+  }
+}
+
+@keyframes progress-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animated .fill,
+  .animated .circularFill {
+    transition: none;
+  }
+
+  .indeterminate.linear .fill,
+  .indeterminate.circular .circularFill {
+    animation-duration: 3s;
+  }
+}

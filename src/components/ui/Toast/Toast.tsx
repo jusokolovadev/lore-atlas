@@ -55,9 +55,13 @@ function ToastMessage({
 }) {
   useEffect(() => {
     if (item.duration <= 0) return;
-    const timer = window.setTimeout(() => onDismiss(item.id), item.duration);
+
+    const timer = window.setTimeout(() => {
+      onDismiss(item.id);
+    }, item.duration);
+
     return () => window.clearTimeout(timer);
-  }, [item, onDismiss]);
+  }, [item.duration, item.id, onDismiss]);
   return (
     <div
       className={`${styles.toast} ${styles[item.type]}`}

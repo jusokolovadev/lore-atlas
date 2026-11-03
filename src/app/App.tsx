@@ -1,10 +1,10 @@
-import { AppRouter } from 'src/app/router/AppRouter.tsx';
-import { ToastProvider } from 'src/components/ui/Toast/Toast';
+import { AppRouter } from './router/AppRouter';
+import { AppInitialization } from './initialization/AppInitialization';
 
 export function App() {
   return (
-    <ToastProvider>
+    <AppInitialization>
       <AppRouter />
-    </ToastProvider>
+    </AppInitialization>
   );
 }
