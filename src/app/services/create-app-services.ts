@@ -61,8 +61,6 @@ export function createAppServices(
     }),
 
     deleteUniverse: createDeleteUniverseUseCase({
-      repository: universeRepository,
-      referenceCategoryRepository,
       deletionRepository: universeDeletionRepository,
       getCurrentTime,
     }),

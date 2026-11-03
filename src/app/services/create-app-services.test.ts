@@ -113,36 +113,31 @@ describe('createAppServices', () => {
     expect(referenceCategoryRepository.save).not.toHaveBeenCalled();
   });
 
-  it('should use the provided repositories when deleting a universe', async () => {
-    universeRepository.findById.mockResolvedValue({
-      id: 'universe-1',
-      name: 'Middle-earth',
-      description: null,
-      coverImage: null,
-      createdAt: '2026-01-01T00:00:00.000Z',
-      updatedAt: '2026-01-01T00:00:00.000Z',
-      deletedAt: null,
-    });
+  it('should use the universe deletion repository when deleting a universe', async () => {
+    const getCurrentTime = jest.fn(() => '2026-01-02T00:00:00.000Z');
 
     const services = createAppServices({
       universeRepository,
       referenceCategoryRepository,
       universeDeletionRepository,
-      getCurrentTime: () => '2026-01-02T00:00:00.000Z',
+      getCurrentTime,
     });
 
     await services.deleteUniverse('universe-1');
 
-    expect(referenceCategoryRepository.findAllActiveByUniverseId).toHaveBeenCalledWith(
-      'universe-1',
-    );
+    expect(getCurrentTime).toHaveBeenCalledTimes(1);
 
     expect(universeDeletionRepository.deleteUniverseWithCategories).toHaveBeenCalledWith(
-      expect.objectContaining({
-        id: 'universe-1',
-        deletedAt: '2026-01-02T00:00:00.000Z',
-      }),
-      [],
+      'universe-1',
+      '2026-01-02T00:00:00.000Z',
     );
+
+    // Deletion is handled atomically by UniverseDeletionRepository.
+    expect(universeRepository.findById).not.toHaveBeenCalled();
+    expect(universeRepository.save).not.toHaveBeenCalled();
+
+    expect(referenceCategoryRepository.findAllActiveByUniverseId).not.toHaveBeenCalled();
+
+    expect(referenceCategoryRepository.save).not.toHaveBeenCalled();
   });
 });

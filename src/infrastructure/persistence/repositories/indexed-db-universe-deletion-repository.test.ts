@@ -17,6 +17,8 @@ import type { CustomReferenceCategory } from 'src/features/reference-categories/
 
 import { IndexedDbUniverseDeletionRepository } from './indexed-db-universe-deletion-repository';
 
+const DELETION_TIME = '2026-02-01T00:00:00.000Z';
+
 function createUniverse(overrides: Partial<Universe> = {}): Universe {
   return {
     id: 'universe-1',
@@ -25,7 +27,7 @@ function createUniverse(overrides: Partial<Universe> = {}): Universe {
     coverImage: null,
     createdAt: '2026-01-01T00:00:00.000Z',
     updatedAt: '2026-01-01T00:00:00.000Z',
-    deletedAt: '2026-02-01T00:00:00.000Z',
+    deletedAt: null,
     ...overrides,
   };
 }
@@ -39,8 +41,8 @@ function createCategory(
     name: 'Species',
     description: null,
     createdAt: '2026-01-01T00:00:00.000Z',
-    updatedAt: '2026-02-01T00:00:00.000Z',
-    deletedAt: '2026-02-01T00:00:00.000Z',
+    updatedAt: '2026-01-01T00:00:00.000Z',
+    deletedAt: null,
     ...overrides,
   };
 }
@@ -148,56 +150,60 @@ describe('IndexedDbUniverseDeletionRepository', () => {
     return reservation;
   }
 
-  it('deletes a universe and its categories atomically', async () => {
-    const universe = createUniverse({
-      deletedAt: null,
-      updatedAt: '2026-01-01T00:00:00.000Z',
-    });
+  it('deletes a universe and all its active categories atomically', async () => {
+    const universe = createUniverse();
 
     const firstCategory = createCategory({
       id: 'category-1',
       name: 'Species',
-      deletedAt: null,
     });
 
     const secondCategory = createCategory({
       id: 'category-2',
       name: 'Languages',
-      deletedAt: null,
     });
 
-    await saveUniverse({
-      ...universe,
-      deletedAt: null,
+    const alreadyDeletedCategory = createCategory({
+      id: 'category-3',
+      name: 'Archived categories',
+      deletedAt: '2026-01-15T00:00:00.000Z',
     });
+
+    await saveUniverse(universe);
 
     await Promise.all([
-      saveCategory({ ...firstCategory, deletedAt: null }),
-      saveCategory({ ...secondCategory, deletedAt: null }),
+      saveCategory(firstCategory),
+      saveCategory(secondCategory),
+      saveCategory(alreadyDeletedCategory),
       saveReservation(firstCategory),
       saveReservation(secondCategory),
     ]);
 
-    const deletedUniverse: Universe = {
+    await repository.deleteUniverseWithCategories(universe.id, DELETION_TIME);
+
+    expect(await findUniverse(universe.id)).toEqual({
       ...universe,
-      deletedAt: '2026-02-01T00:00:00.000Z',
-      updatedAt: '2026-02-01T00:00:00.000Z',
-    };
+      deletedAt: DELETION_TIME,
+      updatedAt: DELETION_TIME,
+    });
 
-    const deletedCategories = [firstCategory, secondCategory].map((category) => ({
-      ...category,
-      deletedAt: '2026-02-01T00:00:00.000Z',
-      updatedAt: '2026-02-01T00:00:00.000Z',
-    }));
+    expect(await findCategory(firstCategory.id)).toEqual({
+      ...firstCategory,
+      deletedAt: DELETION_TIME,
+      updatedAt: DELETION_TIME,
+    });
 
-    await repository.deleteUniverseWithCategories(deletedUniverse, deletedCategories);
+    expect(await findCategory(secondCategory.id)).toEqual({
+      ...secondCategory,
+      deletedAt: DELETION_TIME,
+      updatedAt: DELETION_TIME,
+    });
 
-    expect(await findUniverse(universe.id)).toEqual(deletedUniverse);
-    expect(await findCategory(firstCategory.id)).toEqual(deletedCategories[0]);
-    expect(await findCategory(secondCategory.id)).toEqual(deletedCategories[1]);
+    // Previously deleted categories must remain unchanged.
+    expect(await findCategory(alreadyDeletedCategory.id)).toEqual(alreadyDeletedCategory);
   });
 
-  it('releases category name reservations', async () => {
+  it('releases name reservations for all active categories', async () => {
     const universe = createUniverse();
 
     const firstCategory = createCategory({
@@ -219,13 +225,9 @@ describe('IndexedDbUniverseDeletionRepository', () => {
       saveReservation(secondCategory),
     ]);
 
-    await repository.deleteUniverseWithCategories(universe, [
-      firstCategory,
-      secondCategory,
-    ]);
+    await repository.deleteUniverseWithCategories(universe.id, DELETION_TIME);
 
     expect(await findReservation(universe.id, 'Species')).toBeUndefined();
-
     expect(await findReservation(universe.id, 'Languages')).toBeUndefined();
   });
 
@@ -236,14 +238,13 @@ describe('IndexedDbUniverseDeletionRepository', () => {
       id: 'category-2',
       universeId: 'universe-2',
       name: 'Species',
-      deletedAt: null,
     });
 
     await saveUniverse(universe);
     await saveCategory(otherCategory);
     await saveReservation(otherCategory);
 
-    await repository.deleteUniverseWithCategories(universe, []);
+    await repository.deleteUniverseWithCategories(universe.id, DELETION_TIME);
 
     expect(await findCategory(otherCategory.id)).toEqual(otherCategory);
 
@@ -254,40 +255,46 @@ describe('IndexedDbUniverseDeletionRepository', () => {
     });
   });
 
-  it('rolls back all changes when an operation fails', async () => {
+  it('deletes a universe without categories', async () => {
+    const universe = createUniverse();
+
+    await saveUniverse(universe);
+
+    await repository.deleteUniverseWithCategories(universe.id, DELETION_TIME);
+
+    expect(await findUniverse(universe.id)).toEqual({
+      ...universe,
+      deletedAt: DELETION_TIME,
+      updatedAt: DELETION_TIME,
+    });
+  });
+
+  it('throws NOT_FOUND when the universe does not exist', async () => {
+    await expect(
+      repository.deleteUniverseWithCategories('missing-universe', DELETION_TIME),
+    ).rejects.toMatchObject({
+      code: 'NOT_FOUND',
+    });
+  });
+
+  it('throws ALREADY_DELETED when the universe is already deleted', async () => {
     const universe = createUniverse({
-      deletedAt: null,
-      updatedAt: '2026-01-01T00:00:00.000Z',
+      deletedAt: '2026-01-15T00:00:00.000Z',
     });
 
-    const category = createCategory({
-      id: 'category-1',
-      name: 'Species',
-      deletedAt: null,
-      updatedAt: '2026-01-01T00:00:00.000Z',
-    });
+    const category = createCategory();
 
     await saveUniverse(universe);
     await saveCategory(category);
     await saveReservation(category);
 
-    const deletedUniverse: Universe = {
-      ...universe,
-      deletedAt: '2026-02-01T00:00:00.000Z',
-      updatedAt: '2026-02-01T00:00:00.000Z',
-    };
-
-    // Намеренно передаём некорректный ключ,
-    // чтобы IndexedDB выбросила DataError при put().
-    const invalidCategory = {
-      ...category,
-      id: undefined,
-    } as unknown as CustomReferenceCategory;
-
     await expect(
-      repository.deleteUniverseWithCategories(deletedUniverse, [invalidCategory]),
-    ).rejects.toBeDefined();
+      repository.deleteUniverseWithCategories(universe.id, DELETION_TIME),
+    ).rejects.toMatchObject({
+      code: 'ALREADY_DELETED',
+    });
 
+    // Nothing should have changed.
     expect(await findUniverse(universe.id)).toEqual(universe);
     expect(await findCategory(category.id)).toEqual(category);
 
@@ -296,23 +303,5 @@ describe('IndexedDbUniverseDeletionRepository', () => {
       name: category.name,
       categoryId: category.id,
     });
-  });
-
-  it('should delete a universe without categories', async () => {
-    const universe = createUniverse({
-      deletedAt: null,
-    });
-
-    await saveUniverse(universe);
-
-    const deletedUniverse: Universe = {
-      ...universe,
-      deletedAt: '2026-02-01T00:00:00.000Z',
-      updatedAt: '2026-02-01T00:00:00.000Z',
-    };
-
-    await repository.deleteUniverseWithCategories(deletedUniverse, []);
-
-    expect(await findUniverse(universe.id)).toEqual(deletedUniverse);
   });
 });
