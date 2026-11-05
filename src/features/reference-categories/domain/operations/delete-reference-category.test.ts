@@ -11,6 +11,7 @@ describe('deleteReferenceCategory', () => {
     createdAt: '2026-11-01T12:00:00.000Z',
     updatedAt: '2026-11-01T12:00:00.000Z',
     deletedAt: null,
+    revision: 1,
   };
 
   const now = '2026-11-03T12:00:00.000Z';

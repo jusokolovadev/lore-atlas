@@ -1,14 +1,23 @@
 import type { CustomReferenceCategory } from 'src/features/reference-categories/domain/models/custom-reference-category';
 import type { ReferenceCategoryRepository } from 'src/features/reference-categories/application/repositories/reference-category-repository';
-import { ReferenceCategoryNameConflictError } from 'src/features/reference-categories/application/errors/reference-category-application-errors';
+
+import {
+  ReferenceCategoryConcurrencyError,
+  ReferenceCategoryNameConflictError,
+} from 'src/features/reference-categories/application/errors/reference-category-application-errors';
+
+import type { ReferenceCategoryNameReservation } from './reference-category-name-reservation';
+
 import { getDatabase } from '../database/database';
 import {
   CATEGORY_NAME_RESERVATIONS_STORE,
   REFERENCE_CATEGORIES_STORE,
   UNIVERSES_STORE,
 } from '../database/database.types';
+
 import { idbRequestToPromise } from '../database/idb-request';
 import { idbTransactionToPromise } from '../database/idb-transaction';
+
 import type { Universe } from 'src/features/universes/domain/models/universe';
 
 function isConstraintError(error: unknown): boolean {
@@ -17,6 +26,17 @@ function isConstraintError(error: unknown): boolean {
     error !== null &&
     'name' in error &&
     error.name === 'ConstraintError'
+  );
+}
+
+function isSameCategoryIdentity(
+  existing: CustomReferenceCategory,
+  updated: CustomReferenceCategory,
+): boolean {
+  return (
+    existing.id === updated.id &&
+    existing.universeId === updated.universeId &&
+    existing.createdAt === updated.createdAt
   );
 }
 
@@ -56,7 +76,7 @@ export class IndexedDbReferenceCategoryRepository implements ReferenceCategoryRe
     const reservationRequest = transaction
       .objectStore(CATEGORY_NAME_RESERVATIONS_STORE)
       .get([universeId, name]) as IDBRequest<
-      { universeId: string; name: string; categoryId: string } | undefined
+      ReferenceCategoryNameReservation | undefined
     >;
 
     const categoryPromise = new Promise<CustomReferenceCategory | null>(
@@ -150,7 +170,7 @@ export class IndexedDbReferenceCategoryRepository implements ReferenceCategoryRe
             universeId: category.universeId,
             name: category.name,
             categoryId: category.id,
-          });
+          } satisfies ReferenceCategoryNameReservation);
 
         Promise.all([
           idbRequestToPromise(categoryRequest),
@@ -167,6 +187,7 @@ export class IndexedDbReferenceCategoryRepository implements ReferenceCategoryRe
 
     try {
       const [created] = await Promise.all([operationPromise, transactionPromise]);
+
       return created;
     } catch (error) {
       if (isConstraintError(error)) {
@@ -177,7 +198,10 @@ export class IndexedDbReferenceCategoryRepository implements ReferenceCategoryRe
     }
   }
 
-  async save(category: CustomReferenceCategory): Promise<void> {
+  async update(
+    category: CustomReferenceCategory,
+    expectedRevision: number,
+  ): Promise<void> {
     const database = await getDatabase();
 
     const transaction = database.transaction(
@@ -188,62 +212,144 @@ export class IndexedDbReferenceCategoryRepository implements ReferenceCategoryRe
     const transactionPromise = idbTransactionToPromise(transaction);
 
     const categoriesStore = transaction.objectStore(REFERENCE_CATEGORIES_STORE);
+
     const reservationsStore = transaction.objectStore(CATEGORY_NAME_RESERVATIONS_STORE);
 
-    const existingReservationRequest = reservationsStore
-      .index('by_category_id')
-      .get(category.id) as IDBRequest<
-      { universeId: string; name: string; categoryId: string } | undefined
-    >;
+    const operationPromise = (async () => {
+      const existing = await idbRequestToPromise<CustomReferenceCategory | undefined>(
+        categoriesStore.get(category.id),
+      );
 
-    const operationPromise = new Promise<void>((resolve, reject) => {
-      existingReservationRequest.onsuccess = () => {
-        const existingReservation = existingReservationRequest.result;
+      if (
+        !existing ||
+        existing.revision !== expectedRevision ||
+        existing.deletedAt !== null ||
+        category.deletedAt !== null ||
+        category.revision !== expectedRevision + 1 ||
+        !isSameCategoryIdentity(existing, category)
+      ) {
+        throw new ReferenceCategoryConcurrencyError();
+      }
 
-        if (existingReservation) {
-          reservationsStore.delete([
-            existingReservation.universeId,
-            existingReservation.name,
-          ]);
-        }
+      const existingReservation = await idbRequestToPromise<
+        ReferenceCategoryNameReservation | undefined
+      >(reservationsStore.index('by_category_id').get(category.id));
 
-        if (category.deletedAt === null) {
-          const newReservationRequest = reservationsStore.add({
-            universeId: category.universeId,
-            name: category.name,
-            categoryId: category.id,
-          });
-
-          newReservationRequest.onerror = () => {
-            reject(
-              newReservationRequest.error ??
-                new Error('Failed to reserve category name.'),
-            );
-          };
-        }
-
-        const categoryRequest = categoriesStore.put(category);
-
-        categoryRequest.onsuccess = () => resolve();
-
-        categoryRequest.onerror = () => {
-          reject(
-            categoryRequest.error ?? new Error('Failed to save reference category.'),
-          );
-        };
-      };
-
-      existingReservationRequest.onerror = () => {
-        reject(
-          existingReservationRequest.error ??
-            new Error('Failed to find category name reservation.'),
+      if (
+        !existingReservation ||
+        existingReservation.categoryId !== existing.id ||
+        existingReservation.universeId !== existing.universeId ||
+        existingReservation.name !== existing.name
+      ) {
+        throw new ReferenceCategoryConcurrencyError(
+          'Category name reservation is inconsistent.',
         );
-      };
-    });
+      }
+
+      const nameChanged = existing.name !== category.name;
+
+      if (nameChanged) {
+        reservationsStore.delete([
+          existingReservation.universeId,
+          existingReservation.name,
+        ]);
+
+        const newReservation: ReferenceCategoryNameReservation = {
+          universeId: category.universeId,
+          name: category.name,
+          categoryId: category.id,
+        };
+
+        await idbRequestToPromise(reservationsStore.add(newReservation));
+      }
+
+      await idbRequestToPromise(categoriesStore.put(category));
+    })();
 
     try {
       await Promise.all([operationPromise, transactionPromise]);
     } catch (error) {
+      try {
+        transaction.abort();
+      } catch {
+        // Transaction may already be inactive or aborted.
+      }
+
+      await transactionPromise.catch(() => undefined);
+
+      if (isConstraintError(error)) {
+        throw new ReferenceCategoryNameConflictError();
+      }
+
+      throw error;
+    }
+  }
+
+  async restore(
+    category: CustomReferenceCategory,
+    expectedRevision: number,
+  ): Promise<void> {
+    const database = await getDatabase();
+
+    const transaction = database.transaction(
+      [REFERENCE_CATEGORIES_STORE, CATEGORY_NAME_RESERVATIONS_STORE],
+      'readwrite',
+    );
+
+    const transactionPromise = idbTransactionToPromise(transaction);
+
+    const categoriesStore = transaction.objectStore(REFERENCE_CATEGORIES_STORE);
+
+    const reservationsStore = transaction.objectStore(CATEGORY_NAME_RESERVATIONS_STORE);
+
+    const operationPromise = (async () => {
+      const existing = await idbRequestToPromise<CustomReferenceCategory | undefined>(
+        categoriesStore.get(category.id),
+      );
+
+      if (
+        !existing ||
+        existing.revision !== expectedRevision ||
+        existing.deletedAt === null ||
+        category.deletedAt !== null ||
+        category.revision !== expectedRevision + 1 ||
+        !isSameCategoryIdentity(existing, category)
+      ) {
+        throw new ReferenceCategoryConcurrencyError();
+      }
+
+      const existingReservation = await idbRequestToPromise<
+        ReferenceCategoryNameReservation | undefined
+      >(reservationsStore.index('by_category_id').get(category.id));
+
+      if (existingReservation) {
+        throw new ReferenceCategoryConcurrencyError(
+          'Deleted category unexpectedly has a name reservation.',
+        );
+      }
+
+      const newReservation: ReferenceCategoryNameReservation = {
+        universeId: category.universeId,
+        name: category.name,
+        categoryId: category.id,
+      };
+
+      await idbRequestToPromise(reservationsStore.add(newReservation));
+
+      await idbRequestToPromise(categoriesStore.put(category));
+    })();
+
+    try {
+      await Promise.all([operationPromise, transactionPromise]);
+    } catch (error) {
+      try {
+        transaction.abort();
+      } catch {
+        // Transaction may already be inactive or aborted.
+      }
+
+      await transactionPromise.catch(() => undefined);
+
       if (isConstraintError(error)) {
         throw new ReferenceCategoryNameConflictError();
       }

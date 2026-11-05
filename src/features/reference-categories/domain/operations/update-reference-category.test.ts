@@ -11,6 +11,7 @@ describe('updateReferenceCategory', () => {
     createdAt: '2026-11-01T12:00:00.000Z',
     updatedAt: '2026-11-01T12:00:00.000Z',
     deletedAt: null,
+    revision: 1,
   };
 
   it('updates the category name', () => {

@@ -3,6 +3,8 @@ import {
   CATEGORY_NAME_RESERVATIONS_STORE,
   REFERENCE_CATEGORIES_STORE,
   UNIVERSES_STORE,
+  REFERENCE_ENTRIES_STORE,
+  REFERENCE_ENTRY_NAME_RESERVATIONS_STORE,
 } from '../database/database.types';
 
 describe('Database migrations', () => {
@@ -18,6 +20,10 @@ describe('Database migrations', () => {
     expect(database.objectStoreNames.contains(CATEGORY_NAME_RESERVATIONS_STORE)).toBe(
       true,
     );
+    expect(database.objectStoreNames.contains(REFERENCE_ENTRIES_STORE)).toBe(true);
+    expect(
+      database.objectStoreNames.contains(REFERENCE_ENTRY_NAME_RESERVATIONS_STORE),
+    ).toBe(true);
   });
 
   it('creates an index for finding categories by universe ID', async () => {

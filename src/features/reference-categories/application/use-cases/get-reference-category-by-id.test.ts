@@ -14,6 +14,7 @@ describe('createGetReferenceCategoryByIdUseCase', () => {
     createdAt: '2026-11-01T12:00:00.000Z',
     updatedAt: '2026-11-01T12:00:00.000Z',
     deletedAt: null,
+    revision: 1,
   };
 
   beforeEach(() => {
@@ -21,7 +22,8 @@ describe('createGetReferenceCategoryByIdUseCase', () => {
       findById: jest.fn(),
       findActiveByName: jest.fn(),
       findAllActiveByUniverseId: jest.fn(),
-      save: jest.fn(),
+      update: jest.fn(),
+      restore: jest.fn(),
       createIfUniverseActive: jest.fn(),
     };
   });
@@ -40,9 +42,10 @@ describe('createGetReferenceCategoryByIdUseCase', () => {
   });
 
   it('returns deleted categories', async () => {
-    const deletedCategory = {
+    const deletedCategory: CustomReferenceCategory = {
       ...category,
       deletedAt: '2026-11-02T12:00:00.000Z',
+      revision: 2,
     };
 
     repository.findById.mockResolvedValue(deletedCategory);
@@ -66,5 +69,6 @@ describe('createGetReferenceCategoryByIdUseCase', () => {
     const result = await useCase('missing-category');
 
     expect(result).toBeNull();
+    expect(repository.findById).toHaveBeenCalledWith('missing-category');
   });
 });

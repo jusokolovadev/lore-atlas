@@ -1,8 +1,11 @@
 import type { DatabaseMigration } from './migration.types';
+
 import {
   UNIVERSES_STORE,
   REFERENCE_CATEGORIES_STORE,
   CATEGORY_NAME_RESERVATIONS_STORE,
+  REFERENCE_ENTRIES_STORE,
+  REFERENCE_ENTRY_NAME_RESERVATIONS_STORE,
 } from '../database/database.types';
 
 export const createUniversesStoreMigration: DatabaseMigration = {
@@ -31,7 +34,36 @@ export const createUniversesStoreMigration: DatabaseMigration = {
         },
       );
 
-      reservationsStore.createIndex('by_category_id', 'categoryId', { unique: true });
+      reservationsStore.createIndex('by_category_id', 'categoryId', {
+        unique: true,
+      });
+    }
+
+    if (!database.objectStoreNames.contains(REFERENCE_ENTRIES_STORE)) {
+      const referenceEntriesStore = database.createObjectStore(REFERENCE_ENTRIES_STORE, {
+        keyPath: 'id',
+      });
+
+      referenceEntriesStore.createIndex('by_universe_id', 'universeId');
+
+      referenceEntriesStore.createIndex('by_category', [
+        'universeId',
+        'categoryType',
+        'categoryId',
+      ]);
+    }
+
+    if (!database.objectStoreNames.contains(REFERENCE_ENTRY_NAME_RESERVATIONS_STORE)) {
+      const reservationsStore = database.createObjectStore(
+        REFERENCE_ENTRY_NAME_RESERVATIONS_STORE,
+        {
+          keyPath: ['universeId', 'categoryType', 'categoryId', 'name'],
+        },
+      );
+
+      reservationsStore.createIndex('by_entry_id', 'entryId', {
+        unique: true,
+      });
     }
   },
 };

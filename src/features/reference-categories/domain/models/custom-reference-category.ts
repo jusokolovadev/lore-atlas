@@ -7,5 +7,6 @@ export interface CustomReferenceCategory {
 
   createdAt: string;
   updatedAt: string;
+  revision: number;
   deletedAt: string | null;
 }

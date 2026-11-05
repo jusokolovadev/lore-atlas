@@ -3,7 +3,11 @@ import { createRestoreReferenceCategoryUseCase } from './restore-reference-categ
 import type { ReferenceCategoryRepository } from '../repositories/reference-category-repository';
 import type { CustomReferenceCategory } from '../../domain/models/custom-reference-category';
 
-import { ReferenceCategoryApplicationError } from '../errors/reference-category-application-errors';
+import {
+  ReferenceCategoryApplicationError,
+  ReferenceCategoryNameConflictError,
+  ReferenceCategoryConcurrencyError,
+} from '../errors/reference-category-application-errors';
 import { ReferenceCategoryError } from '../../domain/errors/reference-category-errors';
 
 describe('createRestoreReferenceCategoryUseCase', () => {
@@ -18,6 +22,7 @@ describe('createRestoreReferenceCategoryUseCase', () => {
     createdAt: '2026-11-01T12:00:00.000Z',
     updatedAt: '2026-11-02T12:00:00.000Z',
     deletedAt: '2026-11-02T12:00:00.000Z',
+    revision: 2,
   };
 
   const now = '2026-11-03T12:00:00.000Z';
@@ -27,18 +32,18 @@ describe('createRestoreReferenceCategoryUseCase', () => {
       findById: jest.fn(),
       findActiveByName: jest.fn(),
       findAllActiveByUniverseId: jest.fn(),
-      save: jest.fn(),
+      update: jest.fn(),
+      restore: jest.fn(),
       createIfUniverseActive: jest.fn(),
     };
 
     repository.findById.mockResolvedValue(deletedCategory);
-    repository.findActiveByName.mockResolvedValue(null);
-    repository.save.mockResolvedValue(undefined);
+    repository.restore.mockResolvedValue(undefined);
 
     getCurrentTime = jest.fn().mockReturnValue(now);
   });
 
-  it('restores a deleted category', async () => {
+  it('restores a deleted category and increments revision', async () => {
     const useCase = createRestoreReferenceCategoryUseCase({
       referenceCategoryRepository: repository,
       getCurrentTime,
@@ -46,9 +51,15 @@ describe('createRestoreReferenceCategoryUseCase', () => {
 
     const result = await useCase('category-1');
 
-    expect(result.deletedAt).toBeNull();
-    expect(result.updatedAt).toBe(now);
-    expect(repository.save).toHaveBeenCalledWith(result);
+    expect(result).toEqual({
+      ...deletedCategory,
+      deletedAt: null,
+      updatedAt: now,
+      revision: 3,
+    });
+
+    expect(repository.restore).toHaveBeenCalledWith(result, 2);
+    expect(getCurrentTime).toHaveBeenCalledTimes(1);
   });
 
   it('preserves the category data', async () => {
@@ -63,7 +74,14 @@ describe('createRestoreReferenceCategoryUseCase', () => {
       ...deletedCategory,
       deletedAt: null,
       updatedAt: now,
+      revision: 3,
     });
+
+    expect(result.id).toBe(deletedCategory.id);
+    expect(result.universeId).toBe(deletedCategory.universeId);
+    expect(result.name).toBe(deletedCategory.name);
+    expect(result.description).toBe(deletedCategory.description);
+    expect(result.createdAt).toBe(deletedCategory.createdAt);
   });
 
   it('does not mutate the original category', async () => {
@@ -76,6 +94,24 @@ describe('createRestoreReferenceCategoryUseCase', () => {
 
     expect(deletedCategory.deletedAt).not.toBeNull();
     expect(deletedCategory.updatedAt).toBe('2026-11-02T12:00:00.000Z');
+    expect(deletedCategory.revision).toBe(2);
+  });
+
+  it('passes the expected revision to the repository', async () => {
+    repository.findById.mockResolvedValue({
+      ...deletedCategory,
+      revision: 5,
+    });
+
+    const useCase = createRestoreReferenceCategoryUseCase({
+      referenceCategoryRepository: repository,
+      getCurrentTime,
+    });
+
+    const result = await useCase('category-1');
+
+    expect(result.revision).toBe(6);
+    expect(repository.restore).toHaveBeenCalledWith(result, 5);
   });
 
   it('throws when the category does not exist', async () => {
@@ -90,7 +126,7 @@ describe('createRestoreReferenceCategoryUseCase', () => {
       ReferenceCategoryApplicationError,
     );
 
-    expect(repository.save).not.toHaveBeenCalled();
+    expect(repository.restore).not.toHaveBeenCalled();
     expect(getCurrentTime).not.toHaveBeenCalled();
   });
 
@@ -107,16 +143,12 @@ describe('createRestoreReferenceCategoryUseCase', () => {
 
     await expect(useCase('category-1')).rejects.toThrow(ReferenceCategoryError);
 
-    expect(repository.findActiveByName).not.toHaveBeenCalled();
-    expect(repository.save).not.toHaveBeenCalled();
+    expect(repository.restore).not.toHaveBeenCalled();
+    expect(getCurrentTime).not.toHaveBeenCalled();
   });
 
   it('throws when another active category has the same name', async () => {
-    repository.findActiveByName.mockResolvedValue({
-      ...deletedCategory,
-      id: 'category-2',
-      deletedAt: null,
-    });
+    repository.restore.mockRejectedValue(new ReferenceCategoryNameConflictError());
 
     const useCase = createRestoreReferenceCategoryUseCase({
       referenceCategoryRepository: repository,
@@ -127,21 +159,43 @@ describe('createRestoreReferenceCategoryUseCase', () => {
       code: 'DUPLICATE_NAME',
     });
 
-    expect(repository.save).not.toHaveBeenCalled();
-    expect(getCurrentTime).not.toHaveBeenCalled();
+    expect(repository.restore).toHaveBeenCalledTimes(1);
   });
 
-  it('allows restoration when the repository returns the same category', async () => {
-    repository.findActiveByName.mockResolvedValue(deletedCategory);
+  it('throws when the category was concurrently modified', async () => {
+    repository.restore.mockRejectedValue(new ReferenceCategoryConcurrencyError());
 
     const useCase = createRestoreReferenceCategoryUseCase({
       referenceCategoryRepository: repository,
       getCurrentTime,
     });
 
-    const result = await useCase('category-1');
+    await expect(useCase('category-1')).rejects.toMatchObject({
+      code: 'CONCURRENT_MODIFICATION',
+    });
+  });
 
-    expect(result.deletedAt).toBeNull();
-    expect(repository.save).toHaveBeenCalledWith(result);
+  it('does not check name uniqueness in Application', async () => {
+    const useCase = createRestoreReferenceCategoryUseCase({
+      referenceCategoryRepository: repository,
+      getCurrentTime,
+    });
+
+    await useCase('category-1');
+
+    expect(repository.findActiveByName).not.toHaveBeenCalled();
+  });
+
+  it('propagates unexpected repository errors', async () => {
+    const error = new Error('Database failure');
+
+    repository.restore.mockRejectedValue(error);
+
+    const useCase = createRestoreReferenceCategoryUseCase({
+      referenceCategoryRepository: repository,
+      getCurrentTime,
+    });
+
+    await expect(useCase('category-1')).rejects.toBe(error);
   });
 });

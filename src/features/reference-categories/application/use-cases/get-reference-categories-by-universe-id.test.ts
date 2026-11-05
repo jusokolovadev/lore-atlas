@@ -15,6 +15,7 @@ describe('createGetReferenceCategoriesByUniverseIdUseCase', () => {
       createdAt: '2026-11-01T12:00:00.000Z',
       updatedAt: '2026-11-01T12:00:00.000Z',
       deletedAt: null,
+      revision: 1,
     },
     {
       id: 'category-2',
@@ -24,6 +25,7 @@ describe('createGetReferenceCategoriesByUniverseIdUseCase', () => {
       createdAt: '2026-11-02T12:00:00.000Z',
       updatedAt: '2026-11-02T12:00:00.000Z',
       deletedAt: null,
+      revision: 1,
     },
   ];
 
@@ -32,7 +34,8 @@ describe('createGetReferenceCategoriesByUniverseIdUseCase', () => {
       findById: jest.fn(),
       findActiveByName: jest.fn(),
       findAllActiveByUniverseId: jest.fn(),
-      save: jest.fn(),
+      update: jest.fn(),
+      restore: jest.fn(),
       createIfUniverseActive: jest.fn(),
     };
   });
@@ -60,5 +63,6 @@ describe('createGetReferenceCategoriesByUniverseIdUseCase', () => {
     const result = await useCase('universe-1');
 
     expect(result).toEqual([]);
+    expect(repository.findAllActiveByUniverseId).toHaveBeenCalledWith('universe-1');
   });
 });

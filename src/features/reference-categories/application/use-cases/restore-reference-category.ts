@@ -4,6 +4,7 @@ import type { CustomReferenceCategory } from '../../domain/models/custom-referen
 import {
   ReferenceCategoryApplicationError,
   ReferenceCategoryNameConflictError,
+  ReferenceCategoryConcurrencyError,
 } from '../errors/reference-category-application-errors';
 import type { ReferenceCategoryRepository } from '../repositories/reference-category-repository';
 
@@ -26,36 +27,28 @@ export function createRestoreReferenceCategoryUseCase({
       );
     }
 
-    // Domain validates whether the category can be restored.
     const restoredCategory = restoreReferenceCategory(category);
-
-    // Check whether another active category uses this name.
-    const existingCategory = await referenceCategoryRepository.findActiveByName(
-      category.universeId,
-      restoredCategory.name,
-    );
-
-    if (existingCategory && existingCategory.id !== category.id) {
-      throw new ReferenceCategoryApplicationError(
-        'DUPLICATE_NAME',
-        'A category with this name already exists in this universe.',
-      );
-    }
-
-    const now = getCurrentTime();
 
     const result: CustomReferenceCategory = {
       ...restoredCategory,
-      updatedAt: now,
+      updatedAt: getCurrentTime(),
+      revision: category.revision + 1,
     };
 
     try {
-      await referenceCategoryRepository.save(result);
+      await referenceCategoryRepository.restore(result, category.revision);
     } catch (error) {
       if (error instanceof ReferenceCategoryNameConflictError) {
         throw new ReferenceCategoryApplicationError(
           'DUPLICATE_NAME',
           'A category with this name already exists in this universe.',
+        );
+      }
+
+      if (error instanceof ReferenceCategoryConcurrencyError) {
+        throw new ReferenceCategoryApplicationError(
+          'CONCURRENT_MODIFICATION',
+          'Reference category was modified by another operation.',
         );
       }
 

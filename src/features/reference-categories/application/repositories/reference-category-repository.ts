@@ -12,5 +12,7 @@ export interface ReferenceCategoryRepository {
 
   createIfUniverseActive(category: CustomReferenceCategory): Promise<boolean>;
 
-  save(category: CustomReferenceCategory): Promise<void>;
+  update(category: CustomReferenceCategory, expectedRevision: number): Promise<void>;
+
+  restore(category: CustomReferenceCategory, expectedRevision: number): Promise<void>;
 }

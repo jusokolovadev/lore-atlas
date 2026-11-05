@@ -11,6 +11,7 @@ describe('restoreReferenceCategory', () => {
     createdAt: '2026-11-01T12:00:00.000Z',
     updatedAt: '2026-11-02T12:00:00.000Z',
     deletedAt: '2026-11-02T12:00:00.000Z',
+    revision: 1,
   };
 
   it('sets deletedAt to null', () => {

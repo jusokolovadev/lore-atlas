@@ -1,4 +1,5 @@
 import type { ImageReference } from 'src/shared/types/image-reference';
+import { areImagesEqual } from 'src/shared/utils/are-images-equal';
 
 import { UniverseError } from '../errors/universe-error';
 import type { Universe } from '../models/universe';
@@ -7,33 +8,6 @@ export interface UpdateUniverseInput {
   name?: string;
   description?: string | null;
   coverImage?: ImageReference | null;
-}
-
-function areImagesEqual(
-  first: ImageReference | null,
-  second: ImageReference | null,
-): boolean {
-  if (first === second) {
-    return true;
-  }
-
-  if (first === null || second === null) {
-    return false;
-  }
-
-  if (first.type !== second.type) {
-    return false;
-  }
-
-  if (first.type === 'url' && second.type === 'url') {
-    return first.url === second.url;
-  }
-
-  if (first.type === 'file' && second.type === 'file') {
-    return first.fileId === second.fileId;
-  }
-
-  return false;
 }
 
 export function updateUniverse(universe: Universe, input: UpdateUniverseInput): Universe {

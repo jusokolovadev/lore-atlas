@@ -10,12 +10,15 @@ import {
   UNIVERSES_STORE,
   REFERENCE_CATEGORIES_STORE,
   CATEGORY_NAME_RESERVATIONS_STORE,
+  REFERENCE_ENTRY_NAME_RESERVATIONS_STORE,
+  REFERENCE_ENTRIES_STORE,
 } from 'src/infrastructure/persistence/database/database.types';
 
 import type { Universe } from 'src/features/universes/domain/models/universe';
 import type { CustomReferenceCategory } from 'src/features/reference-categories/domain/models/custom-reference-category';
 
 import { createAppServices } from './create-app-services';
+import { ReferenceEntry } from 'src/features/reference-entry/domain/models/reference-entry';
 
 const timestamp = '2026-01-01T00:00:00.000Z';
 const deletionTimestamp = '2026-01-02T00:00:00.000Z';
@@ -71,6 +74,7 @@ describe('createAppServices integration', () => {
       createdAt: timestamp,
       updatedAt: timestamp,
       deletedAt: null,
+      revision: 1,
     };
   }
   async function findUniverse(id: string): Promise<Universe | undefined> {
@@ -119,6 +123,45 @@ describe('createAppServices integration', () => {
     const request = transaction
       .objectStore(CATEGORY_NAME_RESERVATIONS_STORE)
       .get([universeId, name]);
+
+    const [reservation] = await Promise.all([
+      idbRequestToPromise(request),
+      transactionPromise,
+    ]);
+
+    return reservation;
+  }
+
+  async function findReferenceEntry(id: string): Promise<ReferenceEntry | undefined> {
+    const database = await getDatabase();
+
+    const transaction = database.transaction(REFERENCE_ENTRIES_STORE, 'readonly');
+
+    const transactionPromise = idbTransactionToPromise(transaction);
+
+    const request = transaction.objectStore(REFERENCE_ENTRIES_STORE).get(id);
+
+    const [entry] = await Promise.all([
+      idbRequestToPromise<ReferenceEntry | undefined>(request),
+      transactionPromise,
+    ]);
+
+    return entry;
+  }
+
+  async function findReferenceEntryReservation(entry: ReferenceEntry): Promise<unknown> {
+    const database = await getDatabase();
+
+    const transaction = database.transaction(
+      REFERENCE_ENTRY_NAME_RESERVATIONS_STORE,
+      'readonly',
+    );
+
+    const transactionPromise = idbTransactionToPromise(transaction);
+
+    const request = transaction
+      .objectStore(REFERENCE_ENTRY_NAME_RESERVATIONS_STORE)
+      .get([entry.universeId, entry.categoryType, entry.categoryId, entry.name]);
 
     const [reservation] = await Promise.all([
       idbRequestToPromise(request),
@@ -194,12 +237,14 @@ describe('createAppServices integration', () => {
       ...firstCategory,
       deletedAt: deletionTimestamp,
       updatedAt: deletionTimestamp,
+      revision: 2,
     });
 
     expect(deletedSecondCategory).toEqual({
       ...secondCategory,
       deletedAt: deletionTimestamp,
       updatedAt: deletionTimestamp,
+      revision: 2,
     });
 
     expect(untouchedCategory).toEqual(anotherUniverseCategory);
@@ -265,12 +310,65 @@ describe('createAppServices integration', () => {
       ...firstCategory,
       updatedAt: deletionTimestamp,
       deletedAt: deletionTimestamp,
+      revision: 2,
     });
 
     expect(restoredSecondCategory).toEqual({
       ...secondCategory,
       updatedAt: deletionTimestamp,
       deletedAt: deletionTimestamp,
+      revision: 2,
     });
+  });
+
+  it('should soft delete a reference entry and release its name reservation', async () => {
+    const ids = ['universe-1', 'category-1', 'entry-1'];
+
+    let idIndex = 0;
+    let currentTime = timestamp;
+
+    const services = createAppServices({
+      generateId: () => ids[idIndex++],
+      getCurrentTime: () => currentTime,
+    });
+
+    const universe = await services.createUniverse({
+      name: 'Middle-earth',
+    });
+
+    const category = await services.createReferenceCategory({
+      universeId: universe.id,
+      name: 'Species',
+    });
+
+    const entry = await services.createReferenceEntry({
+      universeId: universe.id,
+      categoryType: 'custom',
+      categoryId: category.id,
+      name: 'Elves',
+    });
+
+    expect(await findReferenceEntry(entry.id)).toEqual(entry);
+
+    expect(await findReferenceEntryReservation(entry)).toEqual({
+      universeId: entry.universeId,
+      categoryType: entry.categoryType,
+      categoryId: entry.categoryId,
+      name: entry.name,
+      entryId: entry.id,
+    });
+
+    currentTime = deletionTimestamp;
+
+    await services.deleteReferenceEntry(entry.id);
+
+    expect(await findReferenceEntry(entry.id)).toEqual({
+      ...entry,
+      deletedAt: deletionTimestamp,
+      updatedAt: deletionTimestamp,
+      revision: 2,
+    });
+
+    expect(await findReferenceEntryReservation(entry)).toBeUndefined();
   });
 });

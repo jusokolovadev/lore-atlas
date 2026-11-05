@@ -33,5 +33,6 @@ export function createReferenceCategory(
     createdAt: metadata.now,
     updatedAt: metadata.now,
     deletedAt: null,
+    revision: 1,
   };
 }

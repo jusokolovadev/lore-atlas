@@ -1,13 +1,21 @@
 import type { UniverseRepository } from 'src/features/universes/application/repositories/universe-repository';
-import type { ReferenceCategoryRepository } from 'src/features/reference-categories/application/repositories/reference-category-repository';
 import type { UniverseDeletionRepository } from 'src/features/universes/application/repositories/universe-deletion-repository';
+
+import type { ReferenceCategoryRepository } from 'src/features/reference-categories/application/repositories/reference-category-repository';
+import type { ReferenceCategoryDeletionRepository } from 'src/features/reference-categories/application/repositories/reference-category-deletion-repository';
+
+import type { ReferenceEntryRepository } from 'src/features/reference-entry/application/repositories/reference-entry-repository';
+import type { ReferenceEntryDeletionRepository } from 'src/features/reference-entry/application/repositories/reference-entry-deletion-repository';
 
 import { createAppServices } from './create-app-services';
 
 describe('createAppServices', () => {
   let universeRepository: jest.Mocked<UniverseRepository>;
   let referenceCategoryRepository: jest.Mocked<ReferenceCategoryRepository>;
+  let referenceCategoryDeletionRepository: jest.Mocked<ReferenceCategoryDeletionRepository>;
   let universeDeletionRepository: jest.Mocked<UniverseDeletionRepository>;
+  let referenceEntryRepository: jest.Mocked<ReferenceEntryRepository>;
+  let referenceEntryDeletionRepository: jest.Mocked<ReferenceEntryDeletionRepository>;
 
   beforeEach(() => {
     universeRepository = {
@@ -20,12 +28,30 @@ describe('createAppServices', () => {
       findById: jest.fn().mockResolvedValue(null),
       findActiveByName: jest.fn().mockResolvedValue(null),
       findAllActiveByUniverseId: jest.fn().mockResolvedValue([]),
-      save: jest.fn().mockResolvedValue(undefined),
       createIfUniverseActive: jest.fn().mockResolvedValue(true),
+      update: jest.fn().mockResolvedValue(undefined),
+      restore: jest.fn().mockResolvedValue(undefined),
+    };
+
+    referenceCategoryDeletionRepository = {
+      deleteReferenceCategory: jest.fn().mockResolvedValue(undefined),
     };
 
     universeDeletionRepository = {
       deleteUniverseWithCategories: jest.fn().mockResolvedValue(undefined),
+    };
+
+    referenceEntryRepository = {
+      findById: jest.fn().mockResolvedValue(null),
+      findAllActiveByCategory: jest.fn().mockResolvedValue([]),
+      findAllActiveByUniverseId: jest.fn().mockResolvedValue([]),
+      createIfCategoryAvailable: jest.fn().mockResolvedValue(undefined),
+      update: jest.fn().mockResolvedValue(undefined),
+      restore: jest.fn().mockResolvedValue(undefined),
+    };
+
+    referenceEntryDeletionRepository = {
+      deleteReferenceEntry: jest.fn().mockResolvedValue(undefined),
     };
   });
 
@@ -106,11 +132,61 @@ describe('createAppServices', () => {
         universeId: 'universe-1',
         name: 'Species',
         deletedAt: null,
+        revision: 1,
       }),
     );
 
     expect(universeRepository.findById).not.toHaveBeenCalled();
-    expect(referenceCategoryRepository.save).not.toHaveBeenCalled();
+  });
+
+  it('should use the reference category repositories when deleting a category', async () => {
+    const getCurrentTime = jest.fn(() => '2026-01-02T00:00:00.000Z');
+
+    const category = {
+      id: 'category-1',
+      universeId: 'universe-1',
+      name: 'Species',
+      description: null,
+      createdAt: '2026-01-01T00:00:00.000Z',
+      updatedAt: '2026-01-01T00:00:00.000Z',
+      deletedAt: null,
+      revision: 3,
+    };
+
+    referenceCategoryRepository.findById.mockResolvedValue(category);
+
+    const services = createAppServices({
+      universeRepository,
+      referenceCategoryRepository,
+      referenceCategoryDeletionRepository,
+      universeDeletionRepository,
+      getCurrentTime,
+    });
+
+    const result = await services.deleteReferenceCategory('category-1');
+
+    expect(referenceCategoryRepository.findById).toHaveBeenCalledWith('category-1');
+    expect(getCurrentTime).toHaveBeenCalledTimes(1);
+
+    expect(
+      referenceCategoryDeletionRepository.deleteReferenceCategory,
+    ).toHaveBeenCalledWith(
+      expect.objectContaining({
+        ...category,
+        deletedAt: '2026-01-02T00:00:00.000Z',
+        updatedAt: '2026-01-02T00:00:00.000Z',
+        revision: 4,
+      }),
+      3,
+    );
+
+    expect(result).toEqual(
+      expect.objectContaining({
+        id: 'category-1',
+        deletedAt: '2026-01-02T00:00:00.000Z',
+        revision: 4,
+      }),
+    );
   });
 
   it('should use the universe deletion repository when deleting a universe', async () => {
@@ -132,12 +208,49 @@ describe('createAppServices', () => {
       '2026-01-02T00:00:00.000Z',
     );
 
-    // Deletion is handled atomically by UniverseDeletionRepository.
     expect(universeRepository.findById).not.toHaveBeenCalled();
     expect(universeRepository.save).not.toHaveBeenCalled();
 
     expect(referenceCategoryRepository.findAllActiveByUniverseId).not.toHaveBeenCalled();
+  });
 
-    expect(referenceCategoryRepository.save).not.toHaveBeenCalled();
+  it('should use the reference entry repositories when deleting an entry', async () => {
+    const getCurrentTime = jest.fn(() => '2026-01-02T00:00:00.000Z');
+
+    const entry = {
+      id: 'entry-1',
+      universeId: 'universe-1',
+      categoryType: 'custom' as const,
+      categoryId: 'category-1',
+      name: 'Elves',
+      description: null,
+      image: null,
+      revision: 3,
+      createdAt: '2026-01-01T00:00:00.000Z',
+      updatedAt: '2026-01-01T00:00:00.000Z',
+      deletedAt: null,
+    };
+
+    referenceEntryRepository.findById.mockResolvedValue(entry);
+
+    const services = createAppServices({
+      universeRepository,
+      referenceCategoryRepository,
+      universeDeletionRepository,
+      referenceEntryRepository,
+      referenceEntryDeletionRepository,
+      getCurrentTime,
+    });
+
+    await services.deleteReferenceEntry('entry-1');
+
+    expect(referenceEntryRepository.findById).toHaveBeenCalledWith('entry-1');
+    expect(getCurrentTime).toHaveBeenCalledTimes(1);
+
+    expect(referenceEntryDeletionRepository.deleteReferenceEntry).toHaveBeenCalledWith(
+      'entry-1',
+      3,
+      '2026-01-02T00:00:00.000Z',
+    );
   });
 });

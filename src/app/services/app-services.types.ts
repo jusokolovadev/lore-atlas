@@ -10,6 +10,10 @@ import type { createGetReferenceCategoryByIdUseCase } from 'src/features/referen
 import type { createGetReferenceCategoriesByUniverseIdUseCase } from 'src/features/reference-categories/application/use-cases/get-reference-categories-by-universe-id';
 import type { createUpdateReferenceCategoryUseCase } from 'src/features/reference-categories/application/use-cases/update-reference-category';
 import type { createDeleteReferenceCategoryUseCase } from 'src/features/reference-categories/application/use-cases/delete-reference-category';
+import { createDeleteReferenceEntryUseCase } from 'src/features/reference-entry/application/use-cases/delete-reference-entry';
+import { createCreateReferenceEntryUseCase } from 'src/features/reference-entry/application/use-cases/create-reference-entry';
+import { createUpdateReferenceEntryUseCase } from 'src/features/reference-entry/application/use-cases/update-reference-entry';
+import { createRestoreReferenceEntryUseCase } from 'src/features/reference-entry/application/use-cases/restore-reference-entry';
 
 export interface AppServices {
   // Universe
@@ -29,4 +33,10 @@ export interface AppServices {
   getReferenceCategoriesByUniverseId: ReturnType<
     typeof createGetReferenceCategoriesByUniverseIdUseCase
   >;
+
+  // Reference Entry
+  createReferenceEntry: ReturnType<typeof createCreateReferenceEntryUseCase>;
+  updateReferenceEntry: ReturnType<typeof createUpdateReferenceEntryUseCase>;
+  deleteReferenceEntry: ReturnType<typeof createDeleteReferenceEntryUseCase>;
+  restoreReferenceEntry: ReturnType<typeof createRestoreReferenceEntryUseCase>;
 }

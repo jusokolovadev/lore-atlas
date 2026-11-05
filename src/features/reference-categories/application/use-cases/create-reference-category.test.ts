@@ -16,8 +16,9 @@ describe('createCreateReferenceCategoryUseCase', () => {
       findById: jest.fn(),
       findActiveByName: jest.fn(),
       findAllActiveByUniverseId: jest.fn(),
-      save: jest.fn(),
       createIfUniverseActive: jest.fn(),
+      update: jest.fn(),
+      restore: jest.fn(),
     };
 
     generateId = jest.fn().mockReturnValue('category-1');
@@ -47,11 +48,28 @@ describe('createCreateReferenceCategoryUseCase', () => {
       createdAt: '2026-11-03T12:00:00.000Z',
       updatedAt: '2026-11-03T12:00:00.000Z',
       deletedAt: null,
+      revision: 1,
     });
 
     expect(referenceCategoryRepository.createIfUniverseActive).toHaveBeenCalledWith(
       result,
     );
+  });
+
+  it('generates an ID and gets the current time once', async () => {
+    const useCase = createCreateReferenceCategoryUseCase({
+      referenceCategoryRepository,
+      generateId,
+      getCurrentTime,
+    });
+
+    await useCase({
+      universeId: 'universe-1',
+      name: 'Species',
+    });
+
+    expect(generateId).toHaveBeenCalledTimes(1);
+    expect(getCurrentTime).toHaveBeenCalledTimes(1);
   });
 
   it('throws when the universe does not exist or is deleted', async () => {
