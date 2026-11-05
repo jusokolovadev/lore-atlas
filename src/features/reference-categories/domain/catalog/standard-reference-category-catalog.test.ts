@@ -12,7 +12,7 @@ describe('standard reference category catalog', () => {
       expect(category).toEqual({
         id: 'species',
         name: 'Species',
-        description: 'Types of species and races that exist in a universe.',
+        description: 'Sapient species, creatures, and other forms of life.',
         isCore: true,
       });
     });
@@ -49,7 +49,7 @@ describe('standard reference category catalog', () => {
 
       expect(categories.length).toBeGreaterThan(0);
       expect(categories.some((category) => category.isCore)).toBe(true);
-      expect(categories.some((category) => !category.isCore)).toBe(false);
+      expect(categories.some((category) => !category.isCore)).toBe(true);
     });
 
     it('returns a new array', () => {
