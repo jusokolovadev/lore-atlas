@@ -33,6 +33,17 @@ import type { AppServices } from './app-services.types';
 import type { ReferenceCategoryDeletionRepository } from 'src/features/reference-categories/application/repositories/reference-category-deletion-repository';
 import { IndexedDbReferenceCategoryDeletionRepository } from 'src/infrastructure/persistence/repositories/indexed-db-reference-category-deletion-repository';
 
+import { createCreateUniverseEntityUseCase } from 'src/features/entities/application/use-cases/create-universe-entity';
+import { createUpdateUniverseEntityUseCase } from 'src/features/entities/application/use-cases/update-universe-entity';
+import { createDeleteUniverseEntityUseCase } from 'src/features/entities/application/use-cases/delete-universe-entity';
+
+import type { UniverseEntityRepository } from 'src/features/entities/application/repositories/universe-entity-repository';
+import type { EntityDeletionRepository } from 'src/features/entities/application/repositories/entity-deletion-repository';
+
+import { IndexedDbEntityDeletionRepository } from 'src/infrastructure/persistence/repositories/indexed-db-entity-deletion-repository';
+import { createRestoreUniverseEntityUseCase } from 'src/features/entities/application/use-cases/restore-universe-entity';
+import { IndexedDbUniverseEntityRepository } from 'src/infrastructure/persistence/repositories/indexed-db-universe-entity-repository';
+
 export interface CreateAppServicesDependencies {
   universeRepository?: UniverseRepository;
   referenceCategoryRepository?: ReferenceCategoryRepository;
@@ -40,6 +51,8 @@ export interface CreateAppServicesDependencies {
   referenceEntryRepository?: ReferenceEntryRepository;
   referenceEntryDeletionRepository?: ReferenceEntryDeletionRepository;
   referenceCategoryDeletionRepository?: ReferenceCategoryDeletionRepository;
+  universeEntityRepository?: UniverseEntityRepository;
+  entityDeletionRepository?: EntityDeletionRepository;
   generateId?: () => string;
   getCurrentTime?: () => string;
 }
@@ -67,6 +80,12 @@ export function createAppServices(
   const referenceEntryDeletionRepository =
     dependencies.referenceEntryDeletionRepository ??
     new IndexedDbReferenceEntryDeletionRepository();
+
+  const universeEntityRepository =
+    dependencies.universeEntityRepository ?? new IndexedDbUniverseEntityRepository();
+
+  const entityDeletionRepository =
+    dependencies.entityDeletionRepository ?? new IndexedDbEntityDeletionRepository();
 
   const generateId = dependencies.generateId ?? (() => crypto.randomUUID());
 
@@ -151,6 +170,28 @@ export function createAppServices(
     deleteReferenceEntry: createDeleteReferenceEntryUseCase({
       referenceEntryRepository: referenceEntryRepository,
       referenceEntryDeletionRepository: referenceEntryDeletionRepository,
+      getCurrentTime,
+    }),
+
+    // Universe Entities
+    createUniverseEntity: createCreateUniverseEntityUseCase({
+      universeEntityRepository,
+      generateId,
+      getCurrentTime,
+    }),
+
+    updateUniverseEntity: createUpdateUniverseEntityUseCase({
+      universeEntityRepository,
+      getCurrentTime,
+    }),
+
+    restoreUniverseEntity: createRestoreUniverseEntityUseCase({
+      universeEntityRepository,
+      getCurrentTime,
+    }),
+
+    deleteUniverseEntity: createDeleteUniverseEntityUseCase({
+      entityDeletionRepository,
       getCurrentTime,
     }),
   };

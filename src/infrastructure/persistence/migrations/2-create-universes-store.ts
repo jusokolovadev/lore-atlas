@@ -6,6 +6,7 @@ import {
   CATEGORY_NAME_RESERVATIONS_STORE,
   REFERENCE_ENTRIES_STORE,
   REFERENCE_ENTRY_NAME_RESERVATIONS_STORE,
+  UNIVERSE_ENTITIES_STORE,
 } from '../database/database.types';
 
 export const createUniversesStoreMigration: DatabaseMigration = {
@@ -64,6 +65,16 @@ export const createUniversesStoreMigration: DatabaseMigration = {
       reservationsStore.createIndex('by_entry_id', 'entryId', {
         unique: true,
       });
+    }
+
+    if (!database.objectStoreNames.contains(UNIVERSE_ENTITIES_STORE)) {
+      const entitiesStore = database.createObjectStore(UNIVERSE_ENTITIES_STORE, {
+        keyPath: 'id',
+      });
+
+      entitiesStore.createIndex('universeId', 'universeId');
+
+      entitiesStore.createIndex('universeId_type', ['universeId', 'type']);
     }
   },
 };

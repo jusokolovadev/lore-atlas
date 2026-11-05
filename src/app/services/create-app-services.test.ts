@@ -1,6 +1,7 @@
 import type { UniverseRepository } from 'src/features/universes/application/repositories/universe-repository';
 import type { UniverseDeletionRepository } from 'src/features/universes/application/repositories/universe-deletion-repository';
-
+import type { UniverseEntityRepository } from 'src/features/entities/application/repositories/universe-entity-repository';
+import type { EntityDeletionRepository } from 'src/features/entities/application/repositories/entity-deletion-repository';
 import type { ReferenceCategoryRepository } from 'src/features/reference-categories/application/repositories/reference-category-repository';
 import type { ReferenceCategoryDeletionRepository } from 'src/features/reference-categories/application/repositories/reference-category-deletion-repository';
 
@@ -16,6 +17,8 @@ describe('createAppServices', () => {
   let universeDeletionRepository: jest.Mocked<UniverseDeletionRepository>;
   let referenceEntryRepository: jest.Mocked<ReferenceEntryRepository>;
   let referenceEntryDeletionRepository: jest.Mocked<ReferenceEntryDeletionRepository>;
+  let universeEntityRepository: jest.Mocked<UniverseEntityRepository>;
+  let entityDeletionRepository: jest.Mocked<EntityDeletionRepository>;
 
   beforeEach(() => {
     universeRepository = {
@@ -54,6 +57,19 @@ describe('createAppServices', () => {
 
     referenceEntryDeletionRepository = {
       deleteReferenceEntry: jest.fn().mockResolvedValue(undefined),
+    };
+
+    universeEntityRepository = {
+      findById: jest.fn().mockResolvedValue(null),
+      findAllActiveByUniverseId: jest.fn().mockResolvedValue([]),
+      findAllActiveByType: jest.fn().mockResolvedValue([]),
+      createIfUniverseActive: jest.fn().mockResolvedValue(true),
+      update: jest.fn().mockResolvedValue(undefined),
+      restore: jest.fn().mockResolvedValue(undefined),
+    };
+
+    entityDeletionRepository = {
+      deleteEntity: jest.fn().mockResolvedValue(undefined),
     };
   });
 
@@ -262,5 +278,218 @@ describe('createAppServices', () => {
       3,
       '2026-01-02T00:00:00.000Z',
     );
+  });
+
+  describe('entities', () => {
+    it('should use the universe entity repository when creating an entity', async () => {
+      const services = createAppServices({
+        universeEntityRepository,
+        generateId: () => 'entity-1',
+        getCurrentTime: () => '2026-01-01T00:00:00.000Z',
+      });
+
+      const entity = await services.createUniverseEntity({
+        universeId: 'universe-1',
+        type: 'character',
+        name: 'Gandalf',
+        properties: {
+          species: null,
+          gender: null,
+          birthDate: null,
+          deathDate: null,
+          ageDescription: null,
+          height: null,
+          weight: null,
+          eyeColor: null,
+          hairColor: null,
+          appearance: null,
+          titles: [],
+          rank: null,
+          socialClass: null,
+          professions: [],
+          abilities: [],
+          personality: null,
+          backstory: null,
+          goals: null,
+        },
+      });
+
+      expect(universeEntityRepository.createIfUniverseActive).toHaveBeenCalledWith(
+        expect.objectContaining({
+          id: 'entity-1',
+          universeId: 'universe-1',
+          type: 'character',
+          name: 'Gandalf',
+          revision: 1,
+          deletedAt: null,
+        }),
+      );
+
+      expect(entity).toEqual(
+        expect.objectContaining({
+          id: 'entity-1',
+          type: 'character',
+          name: 'Gandalf',
+        }),
+      );
+    });
+
+    it('should use the entity deletion repository when deleting an entity', async () => {
+      const getCurrentTime = jest.fn(() => '2026-01-02T00:00:00.000Z');
+
+      const services = createAppServices({
+        entityDeletionRepository,
+        getCurrentTime,
+      });
+
+      await services.deleteUniverseEntity({
+        id: 'entity-1',
+        expectedRevision: 3,
+      });
+
+      expect(getCurrentTime).toHaveBeenCalledTimes(1);
+
+      expect(entityDeletionRepository.deleteEntity).toHaveBeenCalledWith(
+        'entity-1',
+        3,
+        '2026-01-02T00:00:00.000Z',
+      );
+    });
+
+    it('should use the universe entity repository when restoring an entity', async () => {
+      const deletedEntity = {
+        id: 'entity-1',
+        universeId: 'universe-1',
+        type: 'character' as const,
+        name: 'Gandalf',
+        description: null,
+        image: null,
+        createdAt: '2026-01-01T00:00:00.000Z',
+        updatedAt: '2026-01-02T00:00:00.000Z',
+        deletedAt: '2026-01-02T00:00:00.000Z',
+        revision: 3,
+        properties: {
+          species: null,
+          gender: null,
+          birthDate: null,
+          deathDate: null,
+          ageDescription: null,
+          height: null,
+          weight: null,
+          eyeColor: null,
+          hairColor: null,
+          appearance: null,
+          titles: [],
+          rank: null,
+          socialClass: null,
+          professions: [],
+          abilities: [],
+          personality: null,
+          backstory: null,
+          goals: null,
+        },
+      };
+
+      universeEntityRepository.findById.mockResolvedValue(deletedEntity);
+
+      const services = createAppServices({
+        universeEntityRepository,
+        getCurrentTime: () => '2026-01-03T00:00:00.000Z',
+      });
+
+      const restoredEntity = await services.restoreUniverseEntity({
+        id: 'entity-1',
+        expectedRevision: 3,
+      });
+
+      expect(universeEntityRepository.restore).toHaveBeenCalledWith(
+        expect.objectContaining({
+          ...deletedEntity,
+          deletedAt: null,
+          updatedAt: '2026-01-03T00:00:00.000Z',
+          revision: 4,
+        }),
+        3,
+      );
+
+      expect(restoredEntity).toEqual(
+        expect.objectContaining({
+          id: 'entity-1',
+          deletedAt: null,
+          revision: 4,
+        }),
+      );
+    });
+
+    it('should use the universe entity repository when updating an entity', async () => {
+      const currentEntity = {
+        id: 'entity-1',
+        universeId: 'universe-1',
+        type: 'character' as const,
+        name: 'Gandalf',
+        description: null,
+        image: null,
+        createdAt: '2026-01-01T00:00:00.000Z',
+        updatedAt: '2026-01-01T00:00:00.000Z',
+        deletedAt: null,
+        revision: 3,
+        properties: {
+          species: null,
+          gender: null,
+          birthDate: null,
+          deathDate: null,
+          ageDescription: null,
+          height: null,
+          weight: null,
+          eyeColor: null,
+          hairColor: null,
+          appearance: null,
+          titles: [],
+          rank: null,
+          socialClass: null,
+          professions: [],
+          abilities: [],
+          personality: null,
+          backstory: null,
+          goals: null,
+        },
+      };
+
+      universeEntityRepository.findById.mockResolvedValue(currentEntity);
+
+      const services = createAppServices({
+        universeEntityRepository,
+        getCurrentTime: () => '2026-01-02T00:00:00.000Z',
+      });
+
+      const updatedEntity = await services.updateUniverseEntity({
+        id: 'entity-1',
+        expectedRevision: 3,
+        changes: {
+          type: 'character',
+          name: 'Gandalf the Grey',
+        },
+      });
+
+      expect(universeEntityRepository.findById).toHaveBeenCalledWith('entity-1');
+
+      expect(universeEntityRepository.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          ...currentEntity,
+          name: 'Gandalf the Grey',
+          updatedAt: '2026-01-02T00:00:00.000Z',
+          revision: 4,
+        }),
+        3,
+      );
+
+      expect(updatedEntity).toEqual(
+        expect.objectContaining({
+          id: 'entity-1',
+          name: 'Gandalf the Grey',
+          revision: 4,
+        }),
+      );
+    });
   });
 });

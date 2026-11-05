@@ -15,6 +15,11 @@ import { createCreateReferenceEntryUseCase } from 'src/features/reference-entry/
 import { createUpdateReferenceEntryUseCase } from 'src/features/reference-entry/application/use-cases/update-reference-entry';
 import { createRestoreReferenceEntryUseCase } from 'src/features/reference-entry/application/use-cases/restore-reference-entry';
 
+import type { createCreateUniverseEntityUseCase } from 'src/features/entities/application/use-cases/create-universe-entity';
+import type { createUpdateUniverseEntityUseCase } from 'src/features/entities/application/use-cases/update-universe-entity';
+import type { createDeleteUniverseEntityUseCase } from 'src/features/entities/application/use-cases/delete-universe-entity';
+import { createRestoreUniverseEntityUseCase } from 'src/features/entities/application/use-cases/restore-universe-entity';
+
 export interface AppServices {
   // Universe
   createUniverse: ReturnType<typeof createCreateUniverseUseCase>;
@@ -39,4 +44,10 @@ export interface AppServices {
   updateReferenceEntry: ReturnType<typeof createUpdateReferenceEntryUseCase>;
   deleteReferenceEntry: ReturnType<typeof createDeleteReferenceEntryUseCase>;
   restoreReferenceEntry: ReturnType<typeof createRestoreReferenceEntryUseCase>;
+
+  // Universe Entities
+  createUniverseEntity: ReturnType<typeof createCreateUniverseEntityUseCase>;
+  updateUniverseEntity: ReturnType<typeof createUpdateUniverseEntityUseCase>;
+  restoreUniverseEntity: ReturnType<typeof createRestoreUniverseEntityUseCase>;
+  deleteUniverseEntity: ReturnType<typeof createDeleteUniverseEntityUseCase>;
 }
