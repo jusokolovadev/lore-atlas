@@ -2,7 +2,7 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 
 import { App } from './app/App';
-import { ThemeProvider } from './features/theme/ThemeProvider';
+import { AppProviders } from './app/providers';
 
 import './styles/tokens.css';
 import './styles/themes.css';
@@ -11,8 +11,8 @@ import './styles/global.css';
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
-    <ThemeProvider>
+    <AppProviders>
       <App />
-    </ThemeProvider>
+    </AppProviders>
   </React.StrictMode>,
 );

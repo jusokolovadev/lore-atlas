@@ -1,0 +1,101 @@
+.screen {
+  position: relative;
+  display: grid;
+  min-height: 100vh;
+  min-height: 100dvh;
+  place-items: center;
+  overflow: hidden;
+
+  background: var(--color-background);
+  color: var(--color-text-primary);
+}
+
+.background {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+
+  background:
+    radial-gradient(circle at 50% 42%, rgb(119 91 49 / 13%), transparent 38%),
+    radial-gradient(circle at 20% 20%, rgb(49 79 119 / 10%), transparent 30%);
+}
+
+.content {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 24px;
+  text-align: center;
+}
+
+.logoMark {
+  margin-bottom: 24px;
+  color: var(--color-primary);
+  font-size: 48px;
+  animation: glow 3s ease-in-out infinite;
+}
+
+.title {
+  letter-spacing: 0.24em;
+}
+
+.subtitle {
+  margin-top: 12px;
+  letter-spacing: 0.12em;
+}
+
+.divider {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin: 40px 0;
+  color: var(--color-accent);
+}
+
+.divider > span:first-child,
+.divider > span:last-child {
+  width: 48px;
+  height: 1px;
+  background: var(--color-border);
+}
+
+.dividerSymbol {
+  font-size: 16px;
+}
+
+.loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+}
+
+.progress {
+  width: 120px;
+}
+
+.version {
+  position: absolute;
+  right: 24px;
+  bottom: 20px;
+}
+
+@keyframes glow {
+  0%,
+  100% {
+    opacity: 0.7;
+  }
+
+  50% {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+  }
+}
