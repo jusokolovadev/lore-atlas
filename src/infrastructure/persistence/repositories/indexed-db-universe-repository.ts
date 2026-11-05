@@ -1,6 +1,11 @@
 import type { Universe } from 'src/features/universes/domain/models/universe';
 import type { UniverseRepository } from 'src/features/universes/application/repositories/universe-repository';
 
+import {
+  UniverseAlreadyExistsError,
+  UniverseConcurrencyError,
+} from 'src/features/universes/application/errors/universe-repository-errors';
+
 import { getDatabase } from '../database/database';
 import { idbRequestToPromise } from '../database/idb-request';
 import { idbTransactionToPromise } from '../database/idb-transaction';
@@ -11,7 +16,6 @@ export class IndexedDbUniverseRepository implements UniverseRepository {
     const database = await getDatabase();
 
     const transaction = database.transaction(UNIVERSES_STORE, 'readonly');
-
     const transactionPromise = idbTransactionToPromise(transaction);
 
     const request = transaction.objectStore(UNIVERSES_STORE).get(id) as IDBRequest<
@@ -30,7 +34,6 @@ export class IndexedDbUniverseRepository implements UniverseRepository {
     const database = await getDatabase();
 
     const transaction = database.transaction(UNIVERSES_STORE, 'readonly');
-
     const transactionPromise = idbTransactionToPromise(transaction);
 
     const request = transaction.objectStore(UNIVERSES_STORE).getAll() as IDBRequest<
@@ -45,15 +48,64 @@ export class IndexedDbUniverseRepository implements UniverseRepository {
     return universes.filter((universe) => universe.deletedAt === null);
   }
 
-  async save(universe: Universe): Promise<void> {
+  async create(universe: Universe): Promise<void> {
     const database = await getDatabase();
 
     const transaction = database.transaction(UNIVERSES_STORE, 'readwrite');
-
     const transactionPromise = idbTransactionToPromise(transaction);
 
-    const request = transaction.objectStore(UNIVERSES_STORE).put(universe);
+    const request = transaction.objectStore(UNIVERSES_STORE).add(universe);
 
-    await Promise.all([idbRequestToPromise(request), transactionPromise]);
+    try {
+      await Promise.all([idbRequestToPromise(request), transactionPromise]);
+    } catch (error) {
+      await transactionPromise.catch(() => undefined);
+
+      if (error instanceof DOMException && error.name === 'ConstraintError') {
+        throw new UniverseAlreadyExistsError();
+      }
+
+      throw error;
+    }
+  }
+
+  async update(universe: Universe, expectedRevision: number): Promise<void> {
+    await this.saveWithRevisionCheck(universe, expectedRevision);
+  }
+
+  async restore(universe: Universe, expectedRevision: number): Promise<void> {
+    await this.saveWithRevisionCheck(universe, expectedRevision);
+  }
+
+  private async saveWithRevisionCheck(
+    universe: Universe,
+    expectedRevision: number,
+  ): Promise<void> {
+    const database = await getDatabase();
+
+    const transaction = database.transaction(UNIVERSES_STORE, 'readwrite');
+    const transactionPromise = idbTransactionToPromise(transaction);
+
+    const store = transaction.objectStore(UNIVERSES_STORE);
+
+    try {
+      const request = store.get(universe.id) as IDBRequest<Universe | undefined>;
+
+      const currentUniverse = await idbRequestToPromise(request);
+
+      if (!currentUniverse || currentUniverse.revision !== expectedRevision) {
+        transaction.abort();
+        await transactionPromise.catch(() => undefined);
+
+        throw new UniverseConcurrencyError();
+      }
+
+      const updateRequest = store.put(universe);
+
+      await Promise.all([idbRequestToPromise(updateRequest), transactionPromise]);
+    } catch (error) {
+      await transactionPromise.catch(() => undefined);
+      throw error;
+    }
   }
 }

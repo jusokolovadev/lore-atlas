@@ -1,6 +1,7 @@
 import { UniverseError } from '../../domain/errors/universe-error';
 import { restoreUniverse } from '../../domain/operations/restore-universe';
 import type { UniverseRepository } from '../repositories/universe-repository';
+import type { Universe } from '../../domain/models/universe';
 
 export interface RestoreUniverseDependencies {
   repository: UniverseRepository;
@@ -18,13 +19,13 @@ export function createRestoreUniverseUseCase(
     }
 
     const restoredUniverse = restoreUniverse(universe);
-    const now = dependencies.getCurrentTime();
 
-    const result = {
+    const result: Universe = {
       ...restoredUniverse,
-      updatedAt: now,
+      updatedAt: dependencies.getCurrentTime(),
+      revision: universe.revision + 1,
     };
 
-    await dependencies.repository.save(result);
+    await dependencies.repository.restore(result, universe.revision);
   };
 }

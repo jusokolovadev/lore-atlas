@@ -17,6 +17,14 @@ describe('createUniverse', () => {
       createdAt: metadata.now,
       updatedAt: metadata.now,
       deletedAt: null,
+      revision: 1,
+      enabledStandardCategoryIds: [
+        'species',
+        'organization-types',
+        'titles',
+        'ranks',
+        'settlement-types',
+      ],
     });
   });
 

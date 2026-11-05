@@ -5,5 +5,9 @@ export interface UniverseRepository {
 
   findAllActive(): Promise<Universe[]>;
 
-  save(universe: Universe): Promise<void>;
+  create(universe: Universe): Promise<void>;
+
+  update(universe: Universe, expectedRevision: number): Promise<void>;
+
+  restore(universe: Universe, expectedRevision: number): Promise<void>;
 }

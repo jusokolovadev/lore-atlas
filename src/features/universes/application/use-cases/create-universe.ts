@@ -18,7 +18,7 @@ export function createCreateUniverseUseCase(
       now: dependencies.getCurrentTime(),
     });
 
-    await dependencies.repository.save(universe);
+    await dependencies.repository.create(universe);
 
     return universe;
   };

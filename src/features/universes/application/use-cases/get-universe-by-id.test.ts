@@ -11,12 +11,16 @@ describe('createGetUniverseByIdUseCase', () => {
     createdAt: '2026-11-03T10:00:00.000Z',
     updatedAt: '2026-11-03T10:00:00.000Z',
     deletedAt: null,
+    revision: 1,
+    enabledStandardCategoryIds: ['species', 'titles'],
   };
 
   const mockRepository: jest.Mocked<UniverseRepository> = {
     findById: jest.fn(),
     findAllActive: jest.fn(),
-    save: jest.fn(),
+    create: jest.fn(),
+    update: jest.fn(),
+    restore: jest.fn(),
   };
 
   beforeEach(() => {

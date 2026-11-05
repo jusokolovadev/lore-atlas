@@ -21,7 +21,9 @@ describe('createAppServices', () => {
     universeRepository = {
       findById: jest.fn().mockResolvedValue(null),
       findAllActive: jest.fn().mockResolvedValue([]),
-      save: jest.fn().mockResolvedValue(undefined),
+      create: jest.fn().mockResolvedValue(undefined),
+      update: jest.fn().mockResolvedValue(undefined),
+      restore: jest.fn().mockResolvedValue(undefined),
     };
 
     referenceCategoryRepository = {
@@ -76,9 +78,17 @@ describe('createAppServices', () => {
       createdAt: '2026-01-01T00:00:00.000Z',
       updatedAt: '2026-01-01T00:00:00.000Z',
       deletedAt: null,
+      revision: 1,
+      enabledStandardCategoryIds: [
+        'species',
+        'organization-types',
+        'titles',
+        'ranks',
+        'settlement-types',
+      ],
     });
 
-    expect(universeRepository.save).toHaveBeenCalledWith(universe);
+    expect(universeRepository.create).toHaveBeenCalledWith(universe);
   });
 
   it('should use the same universe repository for all universe services', async () => {
@@ -209,7 +219,7 @@ describe('createAppServices', () => {
     );
 
     expect(universeRepository.findById).not.toHaveBeenCalled();
-    expect(universeRepository.save).not.toHaveBeenCalled();
+    expect(universeRepository.update).not.toHaveBeenCalled();
 
     expect(referenceCategoryRepository.findAllActiveByUniverseId).not.toHaveBeenCalled();
   });

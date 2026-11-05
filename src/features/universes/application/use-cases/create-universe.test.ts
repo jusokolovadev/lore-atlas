@@ -5,7 +5,9 @@ describe('createCreateUniverseUseCase', () => {
   const mockRepository: jest.Mocked<UniverseRepository> = {
     findById: jest.fn(),
     findAllActive: jest.fn(),
-    save: jest.fn(),
+    create: jest.fn(),
+    update: jest.fn(),
+    restore: jest.fn(),
   };
 
   const generateId = jest.fn(() => 'test-universe-id');
@@ -13,7 +15,9 @@ describe('createCreateUniverseUseCase', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    mockRepository.save.mockResolvedValue(undefined);
+    mockRepository.create.mockResolvedValue(undefined);
+    mockRepository.update.mockResolvedValue(undefined);
+    mockRepository.restore.mockResolvedValue(undefined);
   });
 
   it('should create and save a universe', async () => {
@@ -35,9 +39,17 @@ describe('createCreateUniverseUseCase', () => {
       createdAt: '2026-11-03T10:00:00.000Z',
       updatedAt: '2026-11-03T10:00:00.000Z',
       deletedAt: null,
+      revision: 1,
+      enabledStandardCategoryIds: [
+        'species',
+        'organization-types',
+        'titles',
+        'ranks',
+        'settlement-types',
+      ],
     });
 
-    expect(mockRepository.save).toHaveBeenCalledWith(result);
+    expect(mockRepository.create).toHaveBeenCalledWith(result);
     expect(generateId).toHaveBeenCalledTimes(1);
     expect(getCurrentTime).toHaveBeenCalledTimes(1);
   });
@@ -53,13 +65,13 @@ describe('createCreateUniverseUseCase', () => {
       code: 'INVALID_NAME',
     });
 
-    expect(mockRepository.save).not.toHaveBeenCalled();
+    expect(mockRepository.create).not.toHaveBeenCalled();
   });
 
   it('should propagate repository errors', async () => {
     const error = new Error('Database error');
 
-    mockRepository.save.mockRejectedValueOnce(error);
+    mockRepository.create.mockRejectedValueOnce(error);
 
     const createUniverse = createCreateUniverseUseCase({
       repository: mockRepository,

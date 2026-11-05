@@ -1,4 +1,5 @@
 import type { ImageReference } from 'src/shared/types/image-reference';
+import { getCoreReferenceCategories } from 'src/features/reference-categories/domain/catalog/standard-reference-category-catalog';
 
 import { UniverseError } from '../errors/universe-error';
 import type { Universe } from '../models/universe';
@@ -32,5 +33,9 @@ export function createUniverse(
     createdAt: metadata.now,
     updatedAt: metadata.now,
     deletedAt: null,
+    revision: 1,
+    enabledStandardCategoryIds: getCoreReferenceCategories().map(
+      (category) => category.id,
+    ),
   };
 }

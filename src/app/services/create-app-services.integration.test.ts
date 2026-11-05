@@ -58,6 +58,14 @@ describe('createAppServices integration', () => {
       createdAt: timestamp,
       updatedAt: timestamp,
       deletedAt: null,
+      revision: 1,
+      enabledStandardCategoryIds: [
+        'species',
+        'organization-types',
+        'titles',
+        'ranks',
+        'settlement-types',
+      ],
     };
   }
 
@@ -304,6 +312,7 @@ describe('createAppServices integration', () => {
       ...universe,
       updatedAt: restorationTimestamp,
       deletedAt: null,
+      revision: 2,
     });
 
     expect(restoredFirstCategory).toEqual({

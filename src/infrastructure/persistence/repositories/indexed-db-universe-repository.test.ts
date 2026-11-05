@@ -11,6 +11,8 @@ function createUniverse(overrides: Partial<Universe> = {}): Universe {
     createdAt: '2026-01-01T00:00:00.000Z',
     updatedAt: '2026-01-01T00:00:00.000Z',
     deletedAt: null,
+    revision: 1,
+    enabledStandardCategoryIds: ['species', 'titles'],
     ...overrides,
   };
 }
@@ -48,7 +50,7 @@ describe('IndexedDbUniverseRepository', () => {
     const repository = new IndexedDbUniverseRepository();
     const universe = createUniverse();
 
-    await repository.save(universe);
+    await repository.create(universe);
 
     const result = await repository.findById(universe.id);
 
@@ -82,8 +84,8 @@ describe('IndexedDbUniverseRepository', () => {
       deletedAt: '2026-02-01T00:00:00.000Z',
     });
 
-    await repository.save(activeUniverse);
-    await repository.save(deletedUniverse);
+    await repository.create(activeUniverse);
+    await repository.create(deletedUniverse);
 
     const result = await repository.findAllActive();
 
@@ -97,7 +99,7 @@ describe('IndexedDbUniverseRepository', () => {
     const repository = new IndexedDbUniverseRepository();
     const universe = createUniverse();
 
-    await repository.save(universe);
+    await repository.create(universe);
 
     expect(await repository.findById(universe.id)).toEqual(universe);
   });
@@ -110,15 +112,16 @@ describe('IndexedDbUniverseRepository', () => {
 
     const universe = createUniverse();
 
-    await repository.save(universe);
+    await repository.create(universe);
 
     const updatedUniverse: Universe = {
       ...universe,
       name: 'The Lord of the Rings',
       updatedAt: '2026-03-01T00:00:00.000Z',
+      revision: 2,
     };
 
-    await repository.save(updatedUniverse);
+    await repository.update(updatedUniverse, universe.revision);
 
     expect(await repository.findById(universe.id)).toEqual(updatedUniverse);
   });

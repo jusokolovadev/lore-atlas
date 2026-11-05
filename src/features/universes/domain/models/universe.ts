@@ -8,4 +8,6 @@ export interface Universe {
   createdAt: string;
   updatedAt: string;
   deletedAt: string | null;
+  revision: number;
+  enabledStandardCategoryIds: string[];
 }

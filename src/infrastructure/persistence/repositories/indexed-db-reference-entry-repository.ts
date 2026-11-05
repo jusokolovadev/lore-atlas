@@ -24,6 +24,7 @@ import type {
   ReferenceEntryCategoryType,
 } from 'src/features/reference-entry/domain/models/reference-entry';
 import type { ReferenceEntryRepository } from 'src/features/reference-entry/application/repositories/reference-entry-repository';
+import { findStandardReferenceCategoryById } from 'src/features/reference-categories/domain/catalog/standard-reference-category-catalog';
 
 export class IndexedDbReferenceEntryRepository implements ReferenceEntryRepository {
   async findById(id: string): Promise<ReferenceEntry | null> {
@@ -71,12 +72,6 @@ export class IndexedDbReferenceEntryRepository implements ReferenceEntryReposito
   }
 
   async createIfCategoryAvailable(entry: ReferenceEntry): Promise<void> {
-    if (entry.categoryType === 'standard') {
-      throw new ReferenceEntryCategoryNotFoundError(
-        'Standard category configuration is not implemented yet.',
-      );
-    }
-
     const database = await getDatabase();
 
     const transaction = database.transaction(
@@ -104,18 +99,21 @@ export class IndexedDbReferenceEntryRepository implements ReferenceEntryReposito
           | {
               id: string;
               deletedAt: string | null;
+              enabledStandardCategoryIds: string[];
             }
           | undefined
         >(universesStore.get(entry.universeId)),
 
-        idbRequestToPromise<
-          | {
-              id: string;
-              universeId: string;
-              deletedAt: string | null;
-            }
-          | undefined
-        >(categoriesStore.get(entry.categoryId)),
+        entry.categoryType === 'custom'
+          ? idbRequestToPromise<
+              | {
+                  id: string;
+                  universeId: string;
+                  deletedAt: string | null;
+                }
+              | undefined
+            >(categoriesStore.get(entry.categoryId))
+          : Promise.resolve(undefined),
 
         idbRequestToPromise<ReferenceEntryNameReservation | undefined>(
           reservationsStore.get([
@@ -131,12 +129,26 @@ export class IndexedDbReferenceEntryRepository implements ReferenceEntryReposito
         throw new ReferenceEntryUniverseUnavailableError();
       }
 
-      if (!category || category.universeId !== entry.universeId) {
-        throw new ReferenceEntryCategoryNotFoundError();
+      if (entry.categoryType === 'standard') {
+        const category = findStandardReferenceCategoryById(entry.categoryId);
+
+        if (!category) {
+          throw new ReferenceEntryCategoryNotFoundError();
+        }
+
+        if (!universe.enabledStandardCategoryIds.includes(entry.categoryId)) {
+          throw new ReferenceEntryCategoryUnavailableError();
+        }
       }
 
-      if (category.deletedAt !== null) {
-        throw new ReferenceEntryCategoryUnavailableError();
+      if (entry.categoryType === 'custom') {
+        if (!category || category.universeId !== entry.universeId) {
+          throw new ReferenceEntryCategoryNotFoundError();
+        }
+
+        if (category.deletedAt !== null) {
+          throw new ReferenceEntryCategoryUnavailableError();
+        }
       }
 
       if (existingReservation) {
@@ -259,12 +271,6 @@ export class IndexedDbReferenceEntryRepository implements ReferenceEntryReposito
   }
 
   async restore(entry: ReferenceEntry, expectedRevision: number): Promise<void> {
-    if (entry.categoryType === 'standard') {
-      throw new ReferenceEntryCategoryNotFoundError(
-        'Standard category configuration is not implemented yet.',
-      );
-    }
-
     const database = await getDatabase();
 
     const transaction = database.transaction(
@@ -306,29 +312,51 @@ export class IndexedDbReferenceEntryRepository implements ReferenceEntryReposito
       }
 
       const [universe, category] = await Promise.all([
-        idbRequestToPromise<{ id: string; deletedAt: string | null } | undefined>(
-          universesStore.get(entry.universeId),
-        ),
         idbRequestToPromise<
           | {
               id: string;
-              universeId: string;
               deletedAt: string | null;
+              enabledStandardCategoryIds: string[];
             }
           | undefined
-        >(categoriesStore.get(entry.categoryId)),
+        >(universesStore.get(entry.universeId)),
+
+        entry.categoryType === 'custom'
+          ? idbRequestToPromise<
+              | {
+                  id: string;
+                  universeId: string;
+                  deletedAt: string | null;
+                }
+              | undefined
+            >(categoriesStore.get(entry.categoryId))
+          : Promise.resolve(undefined),
       ]);
 
       if (!universe || universe.deletedAt !== null) {
         throw new ReferenceEntryUniverseUnavailableError();
       }
 
-      if (!category || category.universeId !== entry.universeId) {
-        throw new ReferenceEntryCategoryNotFoundError();
+      if (entry.categoryType === 'standard') {
+        const category = findStandardReferenceCategoryById(entry.categoryId);
+
+        if (!category) {
+          throw new ReferenceEntryCategoryNotFoundError();
+        }
+
+        if (!universe.enabledStandardCategoryIds.includes(entry.categoryId)) {
+          throw new ReferenceEntryCategoryUnavailableError();
+        }
       }
 
-      if (category.deletedAt !== null) {
-        throw new ReferenceEntryCategoryUnavailableError();
+      if (entry.categoryType === 'custom') {
+        if (!category || category.universeId !== entry.universeId) {
+          throw new ReferenceEntryCategoryNotFoundError();
+        }
+
+        if (category.deletedAt !== null) {
+          throw new ReferenceEntryCategoryUnavailableError();
+        }
       }
 
       const reservation: ReferenceEntryNameReservation = {

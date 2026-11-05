@@ -14,6 +14,8 @@ describe('updateUniverse', () => {
     createdAt: '2026-11-01T10:00:00.000Z',
     updatedAt: '2026-11-01T10:00:00.000Z',
     deletedAt: null,
+    revision: 1,
+    enabledStandardCategoryIds: ['species', 'titles'],
   };
 
   it('should update the name', () => {

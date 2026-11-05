@@ -28,9 +28,10 @@ export function createUpdateUniverseUseCase(
     const result: Universe = {
       ...updatedUniverse,
       updatedAt: dependencies.getCurrentTime(),
+      revision: universe.revision + 1,
     };
 
-    await dependencies.repository.save(result);
+    await dependencies.repository.update(result, universe.revision);
 
     return result;
   };
