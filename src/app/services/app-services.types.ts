@@ -10,15 +10,21 @@ import type { createGetReferenceCategoryByIdUseCase } from 'src/features/referen
 import type { createGetReferenceCategoriesByUniverseIdUseCase } from 'src/features/reference-categories/application/use-cases/get-reference-categories-by-universe-id';
 import type { createUpdateReferenceCategoryUseCase } from 'src/features/reference-categories/application/use-cases/update-reference-category';
 import type { createDeleteReferenceCategoryUseCase } from 'src/features/reference-categories/application/use-cases/delete-reference-category';
-import { createDeleteReferenceEntryUseCase } from 'src/features/reference-entry/application/use-cases/delete-reference-entry';
-import { createCreateReferenceEntryUseCase } from 'src/features/reference-entry/application/use-cases/create-reference-entry';
-import { createUpdateReferenceEntryUseCase } from 'src/features/reference-entry/application/use-cases/update-reference-entry';
-import { createRestoreReferenceEntryUseCase } from 'src/features/reference-entry/application/use-cases/restore-reference-entry';
-
+import type { createDeleteReferenceEntryUseCase } from 'src/features/reference-entry/application/use-cases/delete-reference-entry';
+import type { createCreateReferenceEntryUseCase } from 'src/features/reference-entry/application/use-cases/create-reference-entry';
+import type { createUpdateReferenceEntryUseCase } from 'src/features/reference-entry/application/use-cases/update-reference-entry';
+import type { createRestoreReferenceEntryUseCase } from 'src/features/reference-entry/application/use-cases/restore-reference-entry';
+import type { createCreateRelationshipUseCase } from 'src/features/relationships/application/use-cases/create-relationship';
+import type { createUpdateRelationshipUseCase } from 'src/features/relationships/application/use-cases/update-relationship';
+import type { createDeleteRelationshipUseCase } from 'src/features/relationships/application/use-cases/delete-relationship';
+import type { createRestoreRelationshipUseCase } from 'src/features/relationships/application/use-cases/restore-relationship';
+import type { createGetRelationshipByIdUseCase } from 'src/features/relationships/application/use-cases/get-relationship-by-id';
+import type { createGetRelationshipsByUniverseIdUseCase } from 'src/features/relationships/application/use-cases/get-relationships-by-universe-id';
+import type { createGetRelationshipsByEntityIdUseCase } from 'src/features/relationships/application/use-cases/get-relationships-by-entity-id';
 import type { createCreateUniverseEntityUseCase } from 'src/features/entities/application/use-cases/create-universe-entity';
 import type { createUpdateUniverseEntityUseCase } from 'src/features/entities/application/use-cases/update-universe-entity';
 import type { createDeleteUniverseEntityUseCase } from 'src/features/entities/application/use-cases/delete-universe-entity';
-import { createRestoreUniverseEntityUseCase } from 'src/features/entities/application/use-cases/restore-universe-entity';
+import type { createRestoreUniverseEntityUseCase } from 'src/features/entities/application/use-cases/restore-universe-entity';
 
 export interface AppServices {
   // Universe
@@ -50,4 +56,15 @@ export interface AppServices {
   updateUniverseEntity: ReturnType<typeof createUpdateUniverseEntityUseCase>;
   restoreUniverseEntity: ReturnType<typeof createRestoreUniverseEntityUseCase>;
   deleteUniverseEntity: ReturnType<typeof createDeleteUniverseEntityUseCase>;
+
+  // Relationships
+  createRelationship: ReturnType<typeof createCreateRelationshipUseCase>;
+  updateRelationship: ReturnType<typeof createUpdateRelationshipUseCase>;
+  deleteRelationship: ReturnType<typeof createDeleteRelationshipUseCase>;
+  restoreRelationship: ReturnType<typeof createRestoreRelationshipUseCase>;
+  getRelationshipById: ReturnType<typeof createGetRelationshipByIdUseCase>;
+  getRelationshipsByUniverseId: ReturnType<
+    typeof createGetRelationshipsByUniverseIdUseCase
+  >;
+  getRelationshipsByEntityId: ReturnType<typeof createGetRelationshipsByEntityIdUseCase>;
 }

@@ -29,6 +29,7 @@ describe('IndexedDbReferenceEntryDeletionRepository', () => {
     createdAt: '2026-11-01T10:00:00.000Z',
     updatedAt: '2026-11-01T10:00:00.000Z',
     deletedAt: null,
+    isSpoiler: false,
     ...overrides,
   });
   async function seedEntries(entries: ReferenceEntry[]) {

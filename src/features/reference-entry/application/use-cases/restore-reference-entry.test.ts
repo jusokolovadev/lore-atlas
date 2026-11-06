@@ -31,6 +31,7 @@ describe('createRestoreReferenceEntryUseCase', () => {
     updatedAt: '2026-11-02T10:00:00.000Z',
     deletedAt: '2026-11-02T12:00:00.000Z',
     revision: 1,
+    isSpoiler: false,
   };
 
   beforeEach(() => {

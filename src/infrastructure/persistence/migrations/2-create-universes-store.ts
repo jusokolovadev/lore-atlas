@@ -7,6 +7,7 @@ import {
   REFERENCE_ENTRIES_STORE,
   REFERENCE_ENTRY_NAME_RESERVATIONS_STORE,
   UNIVERSE_ENTITIES_STORE,
+  RELATIONSHIPS_STORE,
 } from '../database/database.types';
 
 export const createUniversesStoreMigration: DatabaseMigration = {
@@ -75,6 +76,30 @@ export const createUniversesStoreMigration: DatabaseMigration = {
       entitiesStore.createIndex('universeId', 'universeId');
 
       entitiesStore.createIndex('universeId_type', ['universeId', 'type']);
+    }
+
+    if (!database.objectStoreNames.contains(RELATIONSHIPS_STORE)) {
+      const relationshipsStore = database.createObjectStore(RELATIONSHIPS_STORE, {
+        keyPath: 'id',
+      });
+
+      relationshipsStore.createIndex('universeId', 'universeId');
+
+      relationshipsStore.createIndex('universeId_sourceEntityId', [
+        'universeId',
+        'sourceEntityId',
+      ]);
+
+      relationshipsStore.createIndex('universeId_targetEntityId', [
+        'universeId',
+        'targetEntityId',
+      ]);
+
+      relationshipsStore.createIndex(
+        'relationshipKey',
+        ['universeId', 'typeId', 'sourceEntityId', 'targetEntityId'],
+        { unique: true },
+      );
     }
   },
 };

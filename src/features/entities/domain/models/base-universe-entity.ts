@@ -12,4 +12,5 @@ export interface BaseUniverseEntity {
   updatedAt: string;
   deletedAt: string | null;
   revision: number;
+  isSpoiler: boolean;
 }

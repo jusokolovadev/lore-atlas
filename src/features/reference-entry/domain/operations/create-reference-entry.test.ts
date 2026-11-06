@@ -35,6 +35,7 @@ describe('createReferenceEntry', () => {
       updatedAt: '2026-01-01T12:00:00.000Z',
       deletedAt: null,
       revision: 1,
+      isSpoiler: false,
     };
 
     expect(result).toEqual(expected);

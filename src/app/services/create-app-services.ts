@@ -17,12 +17,24 @@ import { createCreateReferenceEntryUseCase } from 'src/features/reference-entry/
 import { createUpdateReferenceEntryUseCase } from 'src/features/reference-entry/application/use-cases/update-reference-entry';
 import { createRestoreReferenceEntryUseCase } from 'src/features/reference-entry/application/use-cases/restore-reference-entry';
 
+import { createCreateRelationshipUseCase } from 'src/features/relationships/application/use-cases/create-relationship';
+import { createUpdateRelationshipUseCase } from 'src/features/relationships/application/use-cases/update-relationship';
+import { createDeleteRelationshipUseCase } from 'src/features/relationships/application/use-cases/delete-relationship';
+import { createRestoreRelationshipUseCase } from 'src/features/relationships/application/use-cases/restore-relationship';
+import { createGetRelationshipByIdUseCase } from 'src/features/relationships/application/use-cases/get-relationship-by-id';
+import { createGetRelationshipsByUniverseIdUseCase } from 'src/features/relationships/application/use-cases/get-relationships-by-universe-id';
+import { createGetRelationshipsByEntityIdUseCase } from 'src/features/relationships/application/use-cases/get-relationships-by-entity-id';
+
 import type { UniverseRepository } from 'src/features/universes/application/repositories/universe-repository';
 import type { ReferenceCategoryRepository } from 'src/features/reference-categories/application/repositories/reference-category-repository';
 import type { UniverseDeletionRepository } from 'src/features/universes/application/repositories/universe-deletion-repository';
 import type { ReferenceEntryRepository } from 'src/features/reference-entry/application/repositories/reference-entry-repository';
 import type { ReferenceEntryDeletionRepository } from 'src/features/reference-entry/application/repositories/reference-entry-deletion-repository';
+import type { RelationshipRepository } from 'src/features/relationships/application/repositories/relationship-repository';
+import type { RelationshipDeletionRepository } from 'src/features/relationships/application/repositories/relationship-deletion-repository';
 
+import { IndexedDbRelationshipRepository } from 'src/infrastructure/persistence/repositories/indexed-db-relationship-repository';
+import { createIndexedDbRelationshipDeletionRepository } from 'src/infrastructure/persistence/repositories/indexed-db-relationship-deletion-repository';
 import { IndexedDbUniverseRepository } from 'src/infrastructure/persistence/repositories/indexed-db-universe-repository';
 import { IndexedDbReferenceCategoryRepository } from 'src/infrastructure/persistence/repositories/indexed-db-reference-category-repository';
 import { IndexedDbUniverseDeletionRepository } from 'src/infrastructure/persistence/repositories/indexed-db-universe-deletion-repository';
@@ -53,6 +65,8 @@ export interface CreateAppServicesDependencies {
   referenceCategoryDeletionRepository?: ReferenceCategoryDeletionRepository;
   universeEntityRepository?: UniverseEntityRepository;
   entityDeletionRepository?: EntityDeletionRepository;
+  relationshipRepository?: RelationshipRepository;
+  relationshipDeletionRepository?: RelationshipDeletionRepository;
   generateId?: () => string;
   getCurrentTime?: () => string;
 }
@@ -86,6 +100,13 @@ export function createAppServices(
 
   const entityDeletionRepository =
     dependencies.entityDeletionRepository ?? new IndexedDbEntityDeletionRepository();
+
+  const relationshipRepository =
+    dependencies.relationshipRepository ?? new IndexedDbRelationshipRepository();
+
+  const relationshipDeletionRepository =
+    dependencies.relationshipDeletionRepository ??
+    createIndexedDbRelationshipDeletionRepository();
 
   const generateId = dependencies.generateId ?? (() => crypto.randomUUID());
 
@@ -193,6 +214,40 @@ export function createAppServices(
     deleteUniverseEntity: createDeleteUniverseEntityUseCase({
       entityDeletionRepository,
       getCurrentTime,
+    }),
+
+    // Relationships
+    createRelationship: createCreateRelationshipUseCase({
+      relationshipRepository,
+      generateId,
+      getCurrentTime,
+    }),
+
+    updateRelationship: createUpdateRelationshipUseCase({
+      relationshipRepository,
+      getCurrentTime,
+    }),
+
+    deleteRelationship: createDeleteRelationshipUseCase({
+      relationshipDeletionRepository,
+      getCurrentTime,
+    }),
+
+    restoreRelationship: createRestoreRelationshipUseCase({
+      relationshipRepository,
+      getCurrentTime,
+    }),
+
+    getRelationshipById: createGetRelationshipByIdUseCase({
+      relationshipRepository,
+    }),
+
+    getRelationshipsByUniverseId: createGetRelationshipsByUniverseIdUseCase({
+      relationshipRepository,
+    }),
+
+    getRelationshipsByEntityId: createGetRelationshipsByEntityIdUseCase({
+      relationshipRepository,
     }),
   };
 }

@@ -9,3 +9,5 @@ export const REFERENCE_ENTRY_NAME_RESERVATIONS_STORE =
   'referenceEntryNameReservations' as const;
 
 export const UNIVERSE_ENTITIES_STORE = 'universeEntities' as const;
+
+export const RELATIONSHIPS_STORE = 'relationships' as const;

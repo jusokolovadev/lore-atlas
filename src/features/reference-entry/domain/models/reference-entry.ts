@@ -17,4 +17,5 @@ export interface ReferenceEntry {
   updatedAt: string;
   deletedAt: string | null;
   revision: number;
+  isSpoiler: boolean;
 }

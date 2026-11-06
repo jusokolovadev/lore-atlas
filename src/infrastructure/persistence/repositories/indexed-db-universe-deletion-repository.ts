@@ -3,7 +3,10 @@ import type { UniverseDeletionRepository } from 'src/features/universes/applicat
 import type { Universe } from 'src/features/universes/domain/models/universe';
 import type { CustomReferenceCategory } from 'src/features/reference-categories/domain/models/custom-reference-category';
 import type { ReferenceEntry } from 'src/features/reference-entry/domain/models/reference-entry';
+import { RELATIONSHIPS_STORE, UNIVERSE_ENTITIES_STORE } from '../database/database.types';
 
+import type { UniverseEntity } from 'src/features/entities/domain/models/universe-entity';
+import type { Relationship } from 'src/features/relationships/domain/models/relationship';
 import { UniverseError } from 'src/features/universes/domain/errors/universe-error';
 import { deleteUniverse } from 'src/features/universes/domain/operations/delete-universe';
 import { deleteReferenceCategory } from 'src/features/reference-categories/domain/operations/delete-reference-category';
@@ -45,6 +48,8 @@ export class IndexedDbUniverseDeletionRepository implements UniverseDeletionRepo
         CATEGORY_NAME_RESERVATIONS_STORE,
         REFERENCE_ENTRIES_STORE,
         REFERENCE_ENTRY_NAME_RESERVATIONS_STORE,
+        UNIVERSE_ENTITIES_STORE,
+        RELATIONSHIPS_STORE,
       ],
       'readwrite',
     );
@@ -87,6 +92,8 @@ export class IndexedDbUniverseDeletionRepository implements UniverseDeletionRepo
       const entryReservationsStore = transaction.objectStore(
         REFERENCE_ENTRY_NAME_RESERVATIONS_STORE,
       );
+      const entitiesStore = transaction.objectStore(UNIVERSE_ENTITIES_STORE);
+      const relationshipsStore = transaction.objectStore(RELATIONSHIPS_STORE);
 
       const universeRequest = universesStore.get(universeId) as IDBRequest<
         Universe | undefined
@@ -116,11 +123,21 @@ export class IndexedDbUniverseDeletionRepository implements UniverseDeletionRepo
             .index('by_universe_id')
             .getAll(universeId) as IDBRequest<ReferenceEntry[]>;
 
+          const entitiesRequest = entitiesStore
+            .index('universeId')
+            .getAll(universeId) as IDBRequest<UniverseEntity[]>;
+
+          const relationshipsRequest = relationshipsStore
+            .index('universeId')
+            .getAll(universeId) as IDBRequest<Relationship[]>;
+
           let categories: CustomReferenceCategory[] | undefined;
           let entries: ReferenceEntry[] | undefined;
+          let entities: UniverseEntity[] | undefined;
+          let relationships: Relationship[] | undefined;
 
           const processRecords = () => {
-            if (!categories || !entries) {
+            if (!categories || !entries || !entities || !relationships) {
               return;
             }
 
@@ -130,6 +147,36 @@ export class IndexedDbUniverseDeletionRepository implements UniverseDeletionRepo
               );
 
               const activeEntries = entries.filter((entry) => entry.deletedAt === null);
+
+              const activeEntities = entities.filter(
+                (entity) => entity.deletedAt === null,
+              );
+
+              const activeRelationships = relationships.filter(
+                (relationship) => relationship.deletedAt === null,
+              );
+
+              for (const entity of activeEntities) {
+                const deletedEntity: UniverseEntity = {
+                  ...entity,
+                  deletedAt: now,
+                  updatedAt: now,
+                  revision: entity.revision + 1,
+                };
+
+                entitiesStore.put(deletedEntity);
+              }
+
+              for (const relationship of activeRelationships) {
+                const deletedRelationship: Relationship = {
+                  ...relationship,
+                  deletedAt: now,
+                  updatedAt: now,
+                  revision: relationship.revision + 1,
+                };
+
+                relationshipsStore.put(deletedRelationship);
+              }
 
               let pendingReservations = activeCategories.length + activeEntries.length;
 
@@ -278,6 +325,29 @@ export class IndexedDbUniverseDeletionRepository implements UniverseDeletionRepo
           entriesRequest.onerror = () => {
             fail(
               entriesRequest.error ?? new Error('Failed to retrieve reference entries.'),
+            );
+          };
+
+          entitiesRequest.onsuccess = () => {
+            entities = entitiesRequest.result;
+            processRecords();
+          };
+
+          entitiesRequest.onerror = () => {
+            fail(
+              entitiesRequest.error ?? new Error('Failed to retrieve universe entities.'),
+            );
+          };
+
+          relationshipsRequest.onsuccess = () => {
+            relationships = relationshipsRequest.result;
+            processRecords();
+          };
+
+          relationshipsRequest.onerror = () => {
+            fail(
+              relationshipsRequest.error ??
+                new Error('Failed to retrieve relationships.'),
             );
           };
         } catch (error) {

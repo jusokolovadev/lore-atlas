@@ -64,6 +64,7 @@ describe('createCreateReferenceEntryUseCase', () => {
       updatedAt: now,
       deletedAt: null,
       revision: 1,
+      isSpoiler: false,
     };
 
     expect(result).toEqual(expectedEntry);

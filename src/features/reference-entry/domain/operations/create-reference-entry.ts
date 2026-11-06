@@ -45,5 +45,6 @@ export function createReferenceEntry(
     updatedAt: metadata.now,
     deletedAt: null,
     revision: 1,
+    isSpoiler: false,
   };
 }
