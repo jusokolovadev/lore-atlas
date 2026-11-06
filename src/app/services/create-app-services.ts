@@ -56,6 +56,18 @@ import { IndexedDbEntityDeletionRepository } from 'src/infrastructure/persistenc
 import { createRestoreUniverseEntityUseCase } from 'src/features/entities/application/use-cases/restore-universe-entity';
 import { IndexedDbUniverseEntityRepository } from 'src/infrastructure/persistence/repositories/indexed-db-universe-entity-repository';
 
+import type { ImageStorageRepository } from 'src/features/media/application/repositories/image-storage-repository';
+
+import { createSaveImageUseCase } from 'src/features/media/application/use-cases/save-image';
+import { createGetImageByIdUseCase } from 'src/features/media/application/use-cases/get-image-by-id';
+import { createGetImageContentUseCase } from 'src/features/media/application/use-cases/get-image-content';
+import { createDeleteImageUseCase } from 'src/features/media/application/use-cases/delete-image';
+
+import { IndexedDbImageStorageRepository } from 'src/infrastructure/persistence/repositories/indexed-db-image-storage-repository';
+import { createCleanupUnusedImagesUseCase } from 'src/features/media/application/use-cases/cleanup-unused-images';
+import type { ImageUsageRepository } from 'src/features/media/application/repositories/image-usage-repository';
+import { IndexedDbImageUsageRepository } from 'src/infrastructure/persistence/repositories/indexed-db-image-usage-repository';
+
 export interface CreateAppServicesDependencies {
   universeRepository?: UniverseRepository;
   referenceCategoryRepository?: ReferenceCategoryRepository;
@@ -67,6 +79,9 @@ export interface CreateAppServicesDependencies {
   entityDeletionRepository?: EntityDeletionRepository;
   relationshipRepository?: RelationshipRepository;
   relationshipDeletionRepository?: RelationshipDeletionRepository;
+  imageStorageRepository?: ImageStorageRepository;
+  imageUsageRepository?: ImageUsageRepository;
+  maxImageSize?: number;
   generateId?: () => string;
   getCurrentTime?: () => string;
 }
@@ -107,6 +122,14 @@ export function createAppServices(
   const relationshipDeletionRepository =
     dependencies.relationshipDeletionRepository ??
     createIndexedDbRelationshipDeletionRepository();
+
+  const imageStorageRepository =
+    dependencies.imageStorageRepository ?? new IndexedDbImageStorageRepository();
+
+  const imageUsageRepository =
+    dependencies.imageUsageRepository ?? new IndexedDbImageUsageRepository();
+
+  const maxImageSize = dependencies.maxImageSize ?? 10 * 1024 * 1024;
 
   const generateId = dependencies.generateId ?? (() => crypto.randomUUID());
 
@@ -248,6 +271,31 @@ export function createAppServices(
 
     getRelationshipsByEntityId: createGetRelationshipsByEntityIdUseCase({
       relationshipRepository,
+    }),
+
+    // Image Storage
+    saveImage: createSaveImageUseCase({
+      repository: imageStorageRepository,
+      generateId,
+      getCurrentTime,
+      maxSize: maxImageSize,
+    }),
+
+    getImageById: createGetImageByIdUseCase({
+      repository: imageStorageRepository,
+    }),
+
+    getImageContent: createGetImageContentUseCase({
+      repository: imageStorageRepository,
+    }),
+
+    deleteImage: createDeleteImageUseCase({
+      repository: imageStorageRepository,
+    }),
+
+    cleanupUnusedImages: createCleanupUnusedImagesUseCase({
+      imageStorageRepository,
+      imageUsageRepository,
     }),
   };
 }

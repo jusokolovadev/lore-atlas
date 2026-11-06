@@ -8,6 +8,7 @@ import {
   REFERENCE_ENTRY_NAME_RESERVATIONS_STORE,
   UNIVERSE_ENTITIES_STORE,
   RELATIONSHIPS_STORE,
+  IMAGE_FILES_STORE,
 } from '../database/database.types';
 
 export const createUniversesStoreMigration: DatabaseMigration = {
@@ -100,6 +101,12 @@ export const createUniversesStoreMigration: DatabaseMigration = {
         ['universeId', 'typeId', 'sourceEntityId', 'targetEntityId'],
         { unique: true },
       );
+    }
+
+    if (!database.objectStoreNames.contains(IMAGE_FILES_STORE)) {
+      database.createObjectStore(IMAGE_FILES_STORE, {
+        keyPath: 'id',
+      });
     }
   },
 };

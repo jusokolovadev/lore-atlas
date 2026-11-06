@@ -11,3 +11,5 @@ export const REFERENCE_ENTRY_NAME_RESERVATIONS_STORE =
 export const UNIVERSE_ENTITIES_STORE = 'universeEntities' as const;
 
 export const RELATIONSHIPS_STORE = 'relationships' as const;
+
+export const IMAGE_FILES_STORE = 'imageFiles' as const;

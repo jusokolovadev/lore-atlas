@@ -25,7 +25,11 @@ import type { createCreateUniverseEntityUseCase } from 'src/features/entities/ap
 import type { createUpdateUniverseEntityUseCase } from 'src/features/entities/application/use-cases/update-universe-entity';
 import type { createDeleteUniverseEntityUseCase } from 'src/features/entities/application/use-cases/delete-universe-entity';
 import type { createRestoreUniverseEntityUseCase } from 'src/features/entities/application/use-cases/restore-universe-entity';
-
+import type { createSaveImageUseCase } from 'src/features/media/application/use-cases/save-image';
+import type { createGetImageByIdUseCase } from 'src/features/media/application/use-cases/get-image-by-id';
+import type { createGetImageContentUseCase } from 'src/features/media/application/use-cases/get-image-content';
+import type { createDeleteImageUseCase } from 'src/features/media/application/use-cases/delete-image';
+import type { createCleanupUnusedImagesUseCase } from 'src/features/media/application/use-cases/cleanup-unused-images';
 export interface AppServices {
   // Universe
   createUniverse: ReturnType<typeof createCreateUniverseUseCase>;
@@ -67,4 +71,11 @@ export interface AppServices {
     typeof createGetRelationshipsByUniverseIdUseCase
   >;
   getRelationshipsByEntityId: ReturnType<typeof createGetRelationshipsByEntityIdUseCase>;
+
+  // Image Storage
+  saveImage: ReturnType<typeof createSaveImageUseCase>;
+  getImageById: ReturnType<typeof createGetImageByIdUseCase>;
+  getImageContent: ReturnType<typeof createGetImageContentUseCase>;
+  deleteImage: ReturnType<typeof createDeleteImageUseCase>;
+  cleanupUnusedImages: ReturnType<typeof createCleanupUnusedImagesUseCase>;
 }
