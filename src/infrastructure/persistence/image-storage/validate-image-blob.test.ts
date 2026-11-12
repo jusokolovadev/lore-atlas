@@ -1,7 +1,10 @@
-import { validateImageBlob, type ImageDecoder } from './validate-image-blob';
+import { validateImageBlob } from './validate-image-blob';
 
 describe('validateImageBlob', () => {
-  const decodeImage: jest.MockedFunction<ImageDecoder> = jest.fn();
+  const decodeImage = jest.fn().mockResolvedValue({
+    close: jest.fn(),
+  });
+
   beforeEach(() => {
     jest.clearAllMocks();
 
@@ -115,5 +118,34 @@ describe('validateImageBlob', () => {
     await validateImageBlob(blob, decodeImage);
 
     expect(close).toHaveBeenCalledTimes(1);
+  });
+
+  it('throws a clear error when image decoding is unavailable', async () => {
+    const blob = new Blob(
+      [new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a])],
+      { type: 'image/png' },
+    );
+
+    const originalDescriptor = Object.getOwnPropertyDescriptor(
+      globalThis,
+      'createImageBitmap',
+    );
+
+    try {
+      Object.defineProperty(globalThis, 'createImageBitmap', {
+        configurable: true,
+        value: undefined,
+      });
+
+      await expect(validateImageBlob(blob)).rejects.toThrow(
+        'Image decoding is not supported in this environment.',
+      );
+    } finally {
+      if (originalDescriptor) {
+        Object.defineProperty(globalThis, 'createImageBitmap', originalDescriptor);
+      } else {
+        Reflect.deleteProperty(globalThis, 'createImageBitmap');
+      }
+    }
   });
 });

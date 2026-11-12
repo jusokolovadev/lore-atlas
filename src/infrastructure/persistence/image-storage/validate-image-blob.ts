@@ -47,7 +47,7 @@ async function readBlobAsArrayBuffer(blob: Blob): Promise<ArrayBuffer> {
 
 export async function validateImageBlob(
   blob: Blob,
-  decodeImage: ImageDecoder = createImageBitmap,
+  decodeImage?: ImageDecoder,
 ): Promise<void> {
   const mimeType = blob.type as SupportedImageMimeType;
   const signatures = IMAGE_SIGNATURES[mimeType];
@@ -69,10 +69,18 @@ export async function validateImageBlob(
     throw new Error('Invalid WebP image signature.');
   }
 
+  const decoder =
+    decodeImage ??
+    (typeof createImageBitmap === 'function' ? createImageBitmap : undefined);
+
+  if (!decoder) {
+    throw new Error('Image decoding is not supported in this environment.');
+  }
+
   let decodedImage: Awaited<ReturnType<ImageDecoder>>;
 
   try {
-    decodedImage = await decodeImage(blob);
+    decodedImage = await decoder(blob);
   } catch {
     throw new Error('Image content cannot be decoded.');
   }

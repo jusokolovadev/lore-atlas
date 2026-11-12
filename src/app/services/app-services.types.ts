@@ -30,6 +30,8 @@ import type { createGetImageByIdUseCase } from 'src/features/media/application/u
 import type { createGetImageContentUseCase } from 'src/features/media/application/use-cases/get-image-content';
 import type { createDeleteImageUseCase } from 'src/features/media/application/use-cases/delete-image';
 import type { createCleanupUnusedImagesUseCase } from 'src/features/media/application/use-cases/cleanup-unused-images';
+import { createExportUniverseUseCase } from 'src/features/import-export/application/use-cases/export-universe';
+import { createImportUniverseUseCase } from 'src/features/import-export/application/use-cases/import-universe';
 export interface AppServices {
   // Universe
   createUniverse: ReturnType<typeof createCreateUniverseUseCase>;
@@ -78,4 +80,6 @@ export interface AppServices {
   getImageContent: ReturnType<typeof createGetImageContentUseCase>;
   deleteImage: ReturnType<typeof createDeleteImageUseCase>;
   cleanupUnusedImages: ReturnType<typeof createCleanupUnusedImagesUseCase>;
+  importUniverse: ReturnType<typeof createImportUniverseUseCase>;
+  exportUniverse: ReturnType<typeof createExportUniverseUseCase>;
 }

@@ -67,6 +67,16 @@ import { IndexedDbImageStorageRepository } from 'src/infrastructure/persistence/
 import { createCleanupUnusedImagesUseCase } from 'src/features/media/application/use-cases/cleanup-unused-images';
 import type { ImageUsageRepository } from 'src/features/media/application/repositories/image-usage-repository';
 import { IndexedDbImageUsageRepository } from 'src/infrastructure/persistence/repositories/indexed-db-image-usage-repository';
+import { createExportUniverseUseCase } from 'src/features/import-export/application/use-cases/export-universe';
+
+import type { UniverseExportRepository } from 'src/features/import-export/application/repositories/universe-export-repository';
+import type { UniverseArchiveRepository } from 'src/features/import-export/application/repositories/universe-archive-repository';
+
+import { IndexedDbUniverseExportRepository } from 'src/infrastructure/persistence/repositories/indexed-db-universe-export-repository';
+import { FflateUniverseArchiveRepository } from 'src/infrastructure/persistence/import-export/fflate-universe-archive-repository';
+import { createImportUniverseUseCase } from 'src/features/import-export/application/use-cases/import-universe';
+import type { UniverseImportRepository } from 'src/features/import-export/application/repositories/universe-import-repository';
+import { IndexedDbUniverseImportRepository } from 'src/infrastructure/persistence/repositories/indexed-db-universe-import-repository';
 
 export interface CreateAppServicesDependencies {
   universeRepository?: UniverseRepository;
@@ -81,6 +91,9 @@ export interface CreateAppServicesDependencies {
   relationshipDeletionRepository?: RelationshipDeletionRepository;
   imageStorageRepository?: ImageStorageRepository;
   imageUsageRepository?: ImageUsageRepository;
+  universeExportRepository?: UniverseExportRepository;
+  universeImportRepository?: UniverseImportRepository;
+  universeArchiveRepository?: UniverseArchiveRepository;
   maxImageSize?: number;
   generateId?: () => string;
   getCurrentTime?: () => string;
@@ -128,6 +141,15 @@ export function createAppServices(
 
   const imageUsageRepository =
     dependencies.imageUsageRepository ?? new IndexedDbImageUsageRepository();
+
+  const universeExportRepository =
+    dependencies.universeExportRepository ?? new IndexedDbUniverseExportRepository();
+
+  const universeImportRepository =
+    dependencies.universeImportRepository ?? new IndexedDbUniverseImportRepository();
+
+  const universeArchiveRepository =
+    dependencies.universeArchiveRepository ?? new FflateUniverseArchiveRepository();
 
   const maxImageSize = dependencies.maxImageSize ?? 10 * 1024 * 1024;
 
@@ -296,6 +318,18 @@ export function createAppServices(
     cleanupUnusedImages: createCleanupUnusedImagesUseCase({
       imageStorageRepository,
       imageUsageRepository,
+    }),
+
+    importUniverse: createImportUniverseUseCase({
+      archiveRepository: universeArchiveRepository,
+      importRepository: universeImportRepository,
+      generateId,
+    }),
+
+    exportUniverse: createExportUniverseUseCase({
+      exportRepository: universeExportRepository,
+      archiveRepository: universeArchiveRepository,
+      getCurrentTime,
     }),
   };
 }
