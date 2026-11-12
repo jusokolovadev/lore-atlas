@@ -17,12 +17,24 @@ import { createCreateReferenceEntryUseCase } from 'src/features/reference-entry/
 import { createUpdateReferenceEntryUseCase } from 'src/features/reference-entry/application/use-cases/update-reference-entry';
 import { createRestoreReferenceEntryUseCase } from 'src/features/reference-entry/application/use-cases/restore-reference-entry';
 
+import { createCreateRelationshipUseCase } from 'src/features/relationships/application/use-cases/create-relationship';
+import { createUpdateRelationshipUseCase } from 'src/features/relationships/application/use-cases/update-relationship';
+import { createDeleteRelationshipUseCase } from 'src/features/relationships/application/use-cases/delete-relationship';
+import { createRestoreRelationshipUseCase } from 'src/features/relationships/application/use-cases/restore-relationship';
+import { createGetRelationshipByIdUseCase } from 'src/features/relationships/application/use-cases/get-relationship-by-id';
+import { createGetRelationshipsByUniverseIdUseCase } from 'src/features/relationships/application/use-cases/get-relationships-by-universe-id';
+import { createGetRelationshipsByEntityIdUseCase } from 'src/features/relationships/application/use-cases/get-relationships-by-entity-id';
+
 import type { UniverseRepository } from 'src/features/universes/application/repositories/universe-repository';
 import type { ReferenceCategoryRepository } from 'src/features/reference-categories/application/repositories/reference-category-repository';
 import type { UniverseDeletionRepository } from 'src/features/universes/application/repositories/universe-deletion-repository';
 import type { ReferenceEntryRepository } from 'src/features/reference-entry/application/repositories/reference-entry-repository';
 import type { ReferenceEntryDeletionRepository } from 'src/features/reference-entry/application/repositories/reference-entry-deletion-repository';
+import type { RelationshipRepository } from 'src/features/relationships/application/repositories/relationship-repository';
+import type { RelationshipDeletionRepository } from 'src/features/relationships/application/repositories/relationship-deletion-repository';
 
+import { IndexedDbRelationshipRepository } from 'src/infrastructure/persistence/repositories/indexed-db-relationship-repository';
+import { createIndexedDbRelationshipDeletionRepository } from 'src/infrastructure/persistence/repositories/indexed-db-relationship-deletion-repository';
 import { IndexedDbUniverseRepository } from 'src/infrastructure/persistence/repositories/indexed-db-universe-repository';
 import { IndexedDbReferenceCategoryRepository } from 'src/infrastructure/persistence/repositories/indexed-db-reference-category-repository';
 import { IndexedDbUniverseDeletionRepository } from 'src/infrastructure/persistence/repositories/indexed-db-universe-deletion-repository';
@@ -44,6 +56,28 @@ import { IndexedDbEntityDeletionRepository } from 'src/infrastructure/persistenc
 import { createRestoreUniverseEntityUseCase } from 'src/features/entities/application/use-cases/restore-universe-entity';
 import { IndexedDbUniverseEntityRepository } from 'src/infrastructure/persistence/repositories/indexed-db-universe-entity-repository';
 
+import type { ImageStorageRepository } from 'src/features/media/application/repositories/image-storage-repository';
+
+import { createSaveImageUseCase } from 'src/features/media/application/use-cases/save-image';
+import { createGetImageByIdUseCase } from 'src/features/media/application/use-cases/get-image-by-id';
+import { createGetImageContentUseCase } from 'src/features/media/application/use-cases/get-image-content';
+import { createDeleteImageUseCase } from 'src/features/media/application/use-cases/delete-image';
+
+import { IndexedDbImageStorageRepository } from 'src/infrastructure/persistence/repositories/indexed-db-image-storage-repository';
+import { createCleanupUnusedImagesUseCase } from 'src/features/media/application/use-cases/cleanup-unused-images';
+import type { ImageUsageRepository } from 'src/features/media/application/repositories/image-usage-repository';
+import { IndexedDbImageUsageRepository } from 'src/infrastructure/persistence/repositories/indexed-db-image-usage-repository';
+import { createExportUniverseUseCase } from 'src/features/import-export/application/use-cases/export-universe';
+
+import type { UniverseExportRepository } from 'src/features/import-export/application/repositories/universe-export-repository';
+import type { UniverseArchiveRepository } from 'src/features/import-export/application/repositories/universe-archive-repository';
+
+import { IndexedDbUniverseExportRepository } from 'src/infrastructure/persistence/repositories/indexed-db-universe-export-repository';
+import { FflateUniverseArchiveRepository } from 'src/infrastructure/persistence/import-export/fflate-universe-archive-repository';
+import { createImportUniverseUseCase } from 'src/features/import-export/application/use-cases/import-universe';
+import type { UniverseImportRepository } from 'src/features/import-export/application/repositories/universe-import-repository';
+import { IndexedDbUniverseImportRepository } from 'src/infrastructure/persistence/repositories/indexed-db-universe-import-repository';
+
 export interface CreateAppServicesDependencies {
   universeRepository?: UniverseRepository;
   referenceCategoryRepository?: ReferenceCategoryRepository;
@@ -53,6 +87,14 @@ export interface CreateAppServicesDependencies {
   referenceCategoryDeletionRepository?: ReferenceCategoryDeletionRepository;
   universeEntityRepository?: UniverseEntityRepository;
   entityDeletionRepository?: EntityDeletionRepository;
+  relationshipRepository?: RelationshipRepository;
+  relationshipDeletionRepository?: RelationshipDeletionRepository;
+  imageStorageRepository?: ImageStorageRepository;
+  imageUsageRepository?: ImageUsageRepository;
+  universeExportRepository?: UniverseExportRepository;
+  universeImportRepository?: UniverseImportRepository;
+  universeArchiveRepository?: UniverseArchiveRepository;
+  maxImageSize?: number;
   generateId?: () => string;
   getCurrentTime?: () => string;
 }
@@ -86,6 +128,30 @@ export function createAppServices(
 
   const entityDeletionRepository =
     dependencies.entityDeletionRepository ?? new IndexedDbEntityDeletionRepository();
+
+  const relationshipRepository =
+    dependencies.relationshipRepository ?? new IndexedDbRelationshipRepository();
+
+  const relationshipDeletionRepository =
+    dependencies.relationshipDeletionRepository ??
+    createIndexedDbRelationshipDeletionRepository();
+
+  const imageStorageRepository =
+    dependencies.imageStorageRepository ?? new IndexedDbImageStorageRepository();
+
+  const imageUsageRepository =
+    dependencies.imageUsageRepository ?? new IndexedDbImageUsageRepository();
+
+  const universeExportRepository =
+    dependencies.universeExportRepository ?? new IndexedDbUniverseExportRepository();
+
+  const universeImportRepository =
+    dependencies.universeImportRepository ?? new IndexedDbUniverseImportRepository();
+
+  const universeArchiveRepository =
+    dependencies.universeArchiveRepository ?? new FflateUniverseArchiveRepository();
+
+  const maxImageSize = dependencies.maxImageSize ?? 10 * 1024 * 1024;
 
   const generateId = dependencies.generateId ?? (() => crypto.randomUUID());
 
@@ -192,6 +258,77 @@ export function createAppServices(
 
     deleteUniverseEntity: createDeleteUniverseEntityUseCase({
       entityDeletionRepository,
+      getCurrentTime,
+    }),
+
+    // Relationships
+    createRelationship: createCreateRelationshipUseCase({
+      relationshipRepository,
+      generateId,
+      getCurrentTime,
+    }),
+
+    updateRelationship: createUpdateRelationshipUseCase({
+      relationshipRepository,
+      getCurrentTime,
+    }),
+
+    deleteRelationship: createDeleteRelationshipUseCase({
+      relationshipDeletionRepository,
+      getCurrentTime,
+    }),
+
+    restoreRelationship: createRestoreRelationshipUseCase({
+      relationshipRepository,
+      getCurrentTime,
+    }),
+
+    getRelationshipById: createGetRelationshipByIdUseCase({
+      relationshipRepository,
+    }),
+
+    getRelationshipsByUniverseId: createGetRelationshipsByUniverseIdUseCase({
+      relationshipRepository,
+    }),
+
+    getRelationshipsByEntityId: createGetRelationshipsByEntityIdUseCase({
+      relationshipRepository,
+    }),
+
+    // Image Storage
+    saveImage: createSaveImageUseCase({
+      repository: imageStorageRepository,
+      generateId,
+      getCurrentTime,
+      maxSize: maxImageSize,
+    }),
+
+    getImageById: createGetImageByIdUseCase({
+      repository: imageStorageRepository,
+    }),
+
+    getImageContent: createGetImageContentUseCase({
+      repository: imageStorageRepository,
+    }),
+
+    deleteImage: createDeleteImageUseCase({
+      repository: imageStorageRepository,
+    }),
+
+    cleanupUnusedImages: createCleanupUnusedImagesUseCase({
+      imageStorageRepository,
+      imageUsageRepository,
+    }),
+
+    importUniverse: createImportUniverseUseCase({
+      archiveRepository: universeArchiveRepository,
+      importRepository: universeImportRepository,
+      generateId,
+    }),
+
+    exportUniverse: createExportUniverseUseCase({
+      exportRepository: universeExportRepository,
+      archiveRepository: universeArchiveRepository,
       getCurrentTime,
     }),
   };

@@ -38,6 +38,7 @@ describe('IndexedDbUniverseEntityRepository', () => {
     updatedAt: '2026-01-01T00:00:00.000Z',
     deletedAt: null,
     revision: 1,
+    isSpoiler: false,
     properties: {
       species: null,
       gender: 'Male',

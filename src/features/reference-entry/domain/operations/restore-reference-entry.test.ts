@@ -17,6 +17,7 @@ describe('restoreReferenceEntry', () => {
     updatedAt: '2026-01-02T10:00:00.000Z',
     deletedAt: '2026-01-02T10:00:00.000Z',
     revision: 1,
+    isSpoiler: false,
   };
 
   it('should restore a deleted reference entry', () => {

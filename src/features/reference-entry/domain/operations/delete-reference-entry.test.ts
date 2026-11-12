@@ -17,6 +17,7 @@ describe('deleteReferenceEntry', () => {
     updatedAt: '2026-01-01T10:00:00.000Z',
     deletedAt: null,
     revision: 1,
+    isSpoiler: false,
   };
 
   const deletedAt = '2026-01-02T10:00:00.000Z';

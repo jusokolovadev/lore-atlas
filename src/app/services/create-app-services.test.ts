@@ -4,7 +4,9 @@ import type { UniverseEntityRepository } from 'src/features/entities/application
 import type { EntityDeletionRepository } from 'src/features/entities/application/repositories/entity-deletion-repository';
 import type { ReferenceCategoryRepository } from 'src/features/reference-categories/application/repositories/reference-category-repository';
 import type { ReferenceCategoryDeletionRepository } from 'src/features/reference-categories/application/repositories/reference-category-deletion-repository';
-
+import type { Relationship } from 'src/features/relationships/domain/models/relationship';
+import type { RelationshipRepository } from 'src/features/relationships/application/repositories/relationship-repository';
+import type { RelationshipDeletionRepository } from 'src/features/relationships/application/repositories/relationship-deletion-repository';
 import type { ReferenceEntryRepository } from 'src/features/reference-entry/application/repositories/reference-entry-repository';
 import type { ReferenceEntryDeletionRepository } from 'src/features/reference-entry/application/repositories/reference-entry-deletion-repository';
 
@@ -255,6 +257,7 @@ describe('createAppServices', () => {
       createdAt: '2026-01-01T00:00:00.000Z',
       updatedAt: '2026-01-01T00:00:00.000Z',
       deletedAt: null,
+      isSpoiler: false,
     };
 
     referenceEntryRepository.findById.mockResolvedValue(entry);
@@ -368,6 +371,7 @@ describe('createAppServices', () => {
         updatedAt: '2026-01-02T00:00:00.000Z',
         deletedAt: '2026-01-02T00:00:00.000Z',
         revision: 3,
+        isSpoiler: false,
         properties: {
           species: null,
           gender: null,
@@ -433,6 +437,7 @@ describe('createAppServices', () => {
         updatedAt: '2026-01-01T00:00:00.000Z',
         deletedAt: null,
         revision: 3,
+        isSpoiler: false,
         properties: {
           species: null,
           gender: null,
@@ -489,6 +494,92 @@ describe('createAppServices', () => {
           name: 'Gandalf the Grey',
           revision: 4,
         }),
+      );
+    });
+  });
+
+  describe('Relationships', () => {
+    const relationship: Relationship = {
+      id: 'relationship-1',
+      universeId: 'universe-1',
+      sourceEntityId: 'entity-1',
+      targetEntityId: 'entity-2',
+      typeId: 'parent-of',
+      description: null,
+      isSpoiler: false,
+      createdAt: '2026-01-01T00:00:00.000Z',
+      updatedAt: '2026-01-01T00:00:00.000Z',
+      deletedAt: null,
+      revision: 1,
+    };
+
+    const relationshipRepository = {
+      findById: jest.fn(),
+      findAllActiveByUniverseId: jest.fn(),
+      findAllActiveByEntityId: jest.fn(),
+      createIfParticipantsAvailable: jest.fn(),
+      update: jest.fn(),
+      restore: jest.fn(),
+    };
+
+    const relationshipDeletionRepository = {
+      deleteRelationship: jest.fn(),
+    };
+
+    beforeEach(() => {
+      jest.clearAllMocks();
+    });
+
+    it('exposes all Relationship use cases', () => {
+      const services = createAppServices({
+        relationshipRepository:
+          relationshipRepository as unknown as RelationshipRepository,
+        relationshipDeletionRepository:
+          relationshipDeletionRepository as unknown as RelationshipDeletionRepository,
+      });
+
+      expect(services.createRelationship).toEqual(expect.any(Function));
+      expect(services.updateRelationship).toEqual(expect.any(Function));
+      expect(services.deleteRelationship).toEqual(expect.any(Function));
+      expect(services.restoreRelationship).toEqual(expect.any(Function));
+      expect(services.getRelationshipById).toEqual(expect.any(Function));
+      expect(services.getRelationshipsByUniverseId).toEqual(expect.any(Function));
+      expect(services.getRelationshipsByEntityId).toEqual(expect.any(Function));
+    });
+
+    it('uses the injected repository for relationship queries', async () => {
+      relationshipRepository.findById.mockResolvedValue(relationship);
+      relationshipRepository.findAllActiveByUniverseId.mockResolvedValue([relationship]);
+      relationshipRepository.findAllActiveByEntityId.mockResolvedValue([relationship]);
+
+      const services = createAppServices({
+        relationshipRepository:
+          relationshipRepository as unknown as RelationshipRepository,
+        relationshipDeletionRepository:
+          relationshipDeletionRepository as unknown as RelationshipDeletionRepository,
+      });
+
+      await expect(services.getRelationshipById('relationship-1')).resolves.toEqual(
+        relationship,
+      );
+
+      await expect(services.getRelationshipsByUniverseId('universe-1')).resolves.toEqual([
+        relationship,
+      ]);
+
+      await expect(
+        services.getRelationshipsByEntityId('universe-1', 'entity-1'),
+      ).resolves.toEqual([relationship]);
+
+      expect(relationshipRepository.findById).toHaveBeenCalledWith('relationship-1');
+
+      expect(relationshipRepository.findAllActiveByUniverseId).toHaveBeenCalledWith(
+        'universe-1',
+      );
+
+      expect(relationshipRepository.findAllActiveByEntityId).toHaveBeenCalledWith(
+        'universe-1',
+        'entity-1',
       );
     });
   });

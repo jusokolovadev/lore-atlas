@@ -14,6 +14,7 @@ describe('createRestoreUniverseEntityUseCase', () => {
     updatedAt: '2026-01-15T00:00:00.000Z',
     deletedAt: '2026-01-15T00:00:00.000Z',
     revision: 2,
+    isSpoiler: false,
     properties: {
       species: null,
       gender: 'Male',
