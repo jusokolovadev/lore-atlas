@@ -1,4 +1,4 @@
-import { Text, Progress, Heading } from 'src/components/ui';
+import { Text, Progress, Heading } from '@ui-kit/core';
 
 import styles from './LoadingScreen.module.css';
 

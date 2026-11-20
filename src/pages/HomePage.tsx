@@ -1,5 +1,5 @@
 import styles from './HomePage.module.css';
-import { ThemeToggle } from 'src/components/ui/ThemeToggle/ThemeToggle';
+import { ThemeToggle } from 'src/components/ui/ThemeToggle';
 
 export function HomePage() {
   return (

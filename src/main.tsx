@@ -4,9 +4,7 @@ import ReactDOM from 'react-dom/client';
 import { App } from './app/App';
 import { AppProviders } from './app/providers';
 
-import './styles/tokens.css';
-import './styles/themes.css';
-import './styles/typography.css';
+import '@ui-kit/core/style.css';
 import './styles/global.css';
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
