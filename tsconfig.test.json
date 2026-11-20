@@ -3,6 +3,7 @@
   "compilerOptions": {
     "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.test.tsbuildinfo",
     "module": "CommonJS",
+    "allowJs": true,
     "moduleResolution": "Node",
     "verbatimModuleSyntax": false,
     "types": ["vite/client", "jest", "@testing-library/jest-dom"],

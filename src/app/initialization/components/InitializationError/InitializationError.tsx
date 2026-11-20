@@ -1,4 +1,4 @@
-import { Button, Text, Heading } from 'src/components/ui';
+import { Button, Text, Heading } from '@ui-kit/core';
 
 import styles from './InitializationError.module.css';
 

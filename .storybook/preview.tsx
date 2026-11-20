@@ -1,6 +1,5 @@
 import type { Preview } from '@storybook/react-vite';
 import { useLayoutEffect, type ReactNode } from 'react';
-import '../src/styles/themes.css';
 import '../src/styles/global.css';
 
 type Theme = 'dark' | 'light' | 'system';

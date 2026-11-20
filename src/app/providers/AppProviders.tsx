@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import { ThemeProvider } from 'src/features/theme/ThemeProvider';
-import { ToastProvider } from 'src/components/ui';
+import { ToastProvider } from '@ui-kit/core';
 import { AppServicesProvider } from './AppServicesProvider';
 
 interface AppProvidersProps {
